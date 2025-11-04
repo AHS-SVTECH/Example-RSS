@@ -251,7 +251,7 @@
 
     <div class="menu-container">
         
-        <h2>Entdecke das Neueste der Anton-Hansen-Schule</h2>
+        <h2>Entdecke das Neueste</h2>
 
         <!-- Tab-Buttons -->
         <div class="tab-navigation">
@@ -351,7 +351,7 @@
                 try {
                     const encodedRssUrl = encodeURIComponent(rssUrl);
                     // Den Proxy-Dienst von rss2json verwenden
-                    const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodedRssUrl}&api_key=PLACEHOLDER_KEY`; 
+                    const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodedRssUrl}`; 
                     
                     // Die API-Key ist nicht zwingend notwendig, da es ein kleiner Feed ist, 
                     // wird aber oft für stabilen Betrieb empfohlen. Für einfache Tests weggelassen.
