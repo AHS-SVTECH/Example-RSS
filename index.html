@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynamisches Feed Menü</title>
+    <title>Dynamisches Feed Menü der Anton-Hansen-Schule</title>
 
     <!-- Importiert die Icon-Bibliothek (Font Awesome) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -19,11 +19,12 @@
             margin: 0;
             padding: 0;
             font-family: 'Inter', system-ui, sans-serif;
-            background-color: #f0f4f8; /* Heller Seitenhintergrund */
+            background-color: #f0f4f8;
         }
 
         /* --- Der dunkelblaue Container --- */
         .menu-container {
+            /* Dunkelblau der Anton-Hansen-Schule */
             background-color: #002a5c;
             padding: 40px 20px 60px 20px;
             min-height: 100vh;
@@ -41,7 +42,7 @@
             text-align: center;
         }
 
-        /* --- Tab-Navigation (YouTube / Spotify) --- */
+        /* --- Tab-Navigation --- */
         .tab-navigation {
             display: flex;
             justify-content: center;
@@ -68,7 +69,6 @@
         }
 
         .tab-button.active {
-            /* Aktiver Tab ist "invertiert" */
             background-color: #ffffff;
             color: #002a5c;
             border-color: #ffffff;
@@ -81,7 +81,7 @@
         }
 
         .tab-panel {
-            display: none; /* Wird per JS auf 'block' gesetzt */
+            display: none;
             background-color: #ffffff;
             border-radius: 16px;
             padding: 30px;
@@ -99,6 +99,11 @@
             font-style: italic;
             padding: 40px 0;
         }
+        
+        /* Wird nach dem Laden ausgeblendet */
+        .tab-panel.loaded .status-message {
+            display: none;
+        }
 
         /* --- Feed-Liste (Videos / Folgen) --- */
         .feed-list {
@@ -112,57 +117,87 @@
             align-items: flex-start;
             gap: 15px;
             padding: 15px 0;
-        }
-        
-        /* Trennlinie für alle außer dem letzten Element */
-        .feed-item:not(:last-child) {
             border-bottom: 1px solid #eee;
         }
-
+        
+        .feed-item:last-child {
+            border-bottom: none;
+        }
+        
+        /* YouTube Thumbnail */
         .feed-item img.thumbnail {
-            width: 100px; /* Feste Breite für das Thumbnail */
-            height: 56px; /* 16:9 Aspekt */
+            width: 100px;
+            height: 56px;
             object-fit: cover;
             border-radius: 8px;
             background-color: #eee;
             flex-shrink: 0;
+            cursor: pointer;
+            transition: transform 0.2s ease;
         }
         
+        .feed-item img.thumbnail:hover {
+            transform: scale(1.05);
+        }
+
+        /* Spotify Cover */
         .feed-item.spotify img.thumbnail {
-            width: 80px; /* Spotify-Cover sind oft quadratisch */
+            width: 80px;
             height: 80px;
         }
 
         .feed-item-content {
             display: flex;
             flex-direction: column;
-            overflow: hidden; /* Verhindert, dass Text überläuft */
+            overflow: hidden;
+            flex-grow: 1; /* Nimmt den restlichen Platz ein */
+        }
+        
+        .item-title-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 5px;
         }
 
-        .feed-item-content a {
+        .feed-item-content a.title-link {
             font-size: 1rem;
             font-weight: 600;
             color: #333;
             text-decoration: none;
             line-height: 1.4;
-            /* Verhindert Zeilenumbruch im Titel */
-            white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            white-space: nowrap;
             transition: color 0.2s ease;
         }
 
-        .feed-item-content a:hover {
+        .feed-item-content a.title-link:hover {
             color: #002a5c;
         }
 
         .feed-item-date {
             font-size: 0.85rem;
             color: #777;
-            margin-top: 5px;
+        }
+        
+        /* --- Spezial-Link Button (Typo3 Style) --- */
+        .article-link {
+            flex-shrink: 0; /* Verhindert, dass der Link schrumpft */
+            color: #0056b3; /* Hellere Akzentfarbe */
+            font-size: 1.1rem;
+            text-decoration: none;
+            padding: 2px;
+            border-radius: 4px;
+            transition: color 0.2s ease;
+        }
+        
+        .article-link:hover {
+            color: #007bff;
         }
 
-        /* --- Link zum Kanal / Podcast --- */
+
+        /* --- Kanal/Podcast Link unten --- */
         .channel-link-container {
             text-align: center;
             margin-top: 30px;
@@ -171,14 +206,15 @@
         }
 
         .channel-link {
-            display: inline-block;
-            font-size: 1rem;
-            font-weight: 600;
-            text-decoration: none;
+            background-color: #0056b3;
             color: #ffffff;
-            background-color: #0056b3; /* Ein helleres Blau für den Button */
             padding: 12px 30px;
             border-radius: 50px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
             transition: all 0.3s ease;
         }
 
@@ -188,51 +224,42 @@
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
 
-        /* --- Responsives Design --- */
+        /* --- Responsives Design (Mobile Anpassung) --- */
         @media (max-width: 768px) {
-            .menu-container {
-                padding: 20px 10px 40px 10px;
-            }
-            .menu-container h2 {
-                font-size: 1.75rem;
-            }
-            .tab-panel {
-                padding: 20px;
-            }
-            /* Auf Mobilgeräten wird der Titel umgebrochen */
-            .feed-item-content a {
-                white-space: normal;
-            }
             .feed-item {
-                /* Bild und Text stapeln */
+                /* Auf Mobilgeräten Bild und Text untereinander */
                 flex-direction: column;
             }
-            .feed-item.spotify img.thumbnail {
+            .feed-item img.thumbnail, .feed-item.spotify img.thumbnail {
                 width: 100%;
                 height: auto;
-                max-width: 200px; /* Verhindert, dass es zu groß wird */
+                max-width: 100%;
+                margin-bottom: 5px;
             }
-            .feed-item img.thumbnail {
-                width: 100%;
-                height: auto; /* Höhe automatisch anpassen */
+            
+            .feed-item-content a.title-link {
+                white-space: normal; /* Erlaubt Umbruch des Titels */
+            }
+            .item-title-row {
+                /* Wenn die Zeile umbricht, wird der Link nach unten verschoben */
+                flex-wrap: wrap; 
             }
         }
-
     </style>
 </head>
 <body>
 
     <div class="menu-container">
         
-        <h2>Entdecke das Neueste</h2>
+        <h2>Entdecke das Neueste der Anton-Hansen-Schule</h2>
 
         <!-- Tab-Buttons -->
         <div class="tab-navigation">
             <button class="tab-button active" data-tab="youtube">
-                <i class="fa-brands fa-youtube"></i> YouTube
+                <i class="fa-brands fa-youtube"></i> Videos
             </button>
             <button class="tab-button" data-tab="spotify">
-                <i class="fa-brands fa-spotify"></i> Spotify
+                <i class="fa-brands fa-spotify"></i> Podcast
             </button>
         </div>
 
@@ -244,9 +271,7 @@
                 <div class="status-message">
                     <i class="fa-solid fa-spinner fa-spin"></i> Lade neueste Videos...
                 </div>
-                <ul class="feed-list" id="youtube-feed-list">
-                    <!-- Feed-Einträge werden hier von JS eingefügt -->
-                </ul>
+                <ul class="feed-list" id="youtube-feed-list"></ul>
                 <div class="channel-link-container">
                     <a href="#" class="channel-link youtube" id="youtube-channel-link" target="_blank" rel="noopener noreferrer">
                         <i class="fa-brands fa-youtube"></i> Zum YouTube-Kanal
@@ -259,9 +284,7 @@
                 <div class="status-message">
                     <i class="fa-solid fa-spinner fa-spin"></i> Lade neueste Folgen...
                 </div>
-                <ul class="feed-list" id="spotify-feed-list">
-                    <!-- Feed-Einträge werden hier von JS eingefügt -->
-                </ul>
+                <ul class="feed-list" id="spotify-feed-list"></ul>
                 <div class="channel-link-container">
                     <a href="#" class="channel-link spotify" id="spotify-channel-link" target="_blank" rel="noopener noreferrer">
                         <i class="fa-brands fa-spotify"></i> Zum Spotify-Podcast
@@ -273,78 +296,65 @@
     </div>
 
     <script type="module">
-        // --- KONFIGURATION: BITTE ANPASSEN! ---
+        // --- KONFIGURATION (Werte vom Benutzer) ---
         
-        // Hier musst du deine RSS-Feed-URLs eintragen.
-        // WICHTIG: Die Platzhalter müssen ersetzt werden!
         const rssFeeds = {
-            // Finde deine YouTube Channel-ID (z.B. UCs-J...)
-            // Gehe auf deinen Kanal -> Rechtsklick "Seitenquelltext anzeigen" -> Suche nach "channel_id"
             youtube: 'https://www.youtube.com/feeds/videos.xml?channel_id=UC9GtyN6irUK93FwmYsnTHkw',
-            
-            // Finde deine Spotify Podcast RSS-Feed URL.
-            // (z.B. bei Anchor.fm oder einem anderen Hoster)
             spotify: 'https://anchor.fm/s/105dbc5d0/podcast/rss'
         };
         
+        const cachedFeeds = {}; // Speichert die geladenen Daten
+        
+        // Regulärer Ausdruck, um einen Link zur anton-hansen-schule.de zu finden
+        const ahsLinkRegex = /(https?:\/\/[^\s"]*anton-hansen-schule\.de[^\s"]*)/i;
+        
         // ------------------------------------------
 
-        // Warten, bis die Seite geladen ist
         document.addEventListener('DOMContentLoaded', () => {
             
             const tabButtons = document.querySelectorAll('.tab-button');
             const tabPanels = document.querySelectorAll('.tab-panel');
 
-            // Funktion zum Umschalten der Tabs
-            function handleTabClick(event) {
-                const tabId = event.currentTarget.dataset.tab;
-
-                // 1. Alle Buttons und Panels deaktivieren
+            // Setzt den korrekten aktiven Tab
+            function activateTab(tabId) {
                 tabButtons.forEach(btn => btn.classList.remove('active'));
                 tabPanels.forEach(panel => panel.classList.remove('active'));
 
-                // 2. Ziel-Button und Panel aktivieren
-                event.currentTarget.classList.add('active');
+                document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
                 document.getElementById(tabId).classList.add('active');
-
-                // 3. Feed laden (wenn noch nicht geschehen)
-                loadFeed(tabId);
             }
-
-            // Klick-Listener für jeden Tab-Button
+            
+            // Klick-Listener für den Tab-Wechsel
             tabButtons.forEach(button => {
-                button.addEventListener('click', handleTabClick);
+                button.addEventListener('click', (event) => {
+                    activateTab(event.currentTarget.dataset.tab);
+                });
             });
 
             // Funktion zum Laden des Feeds
             async function loadFeed(tabId) {
+                // Wenn Daten bereits im Cache sind, überspringen
+                if (cachedFeeds[tabId]) {
+                    renderFeed(tabId, cachedFeeds[tabId]);
+                    return;
+                }
+                
                 const panel = document.getElementById(tabId);
-                const list = panel.querySelector('.feed-list');
                 const statusMessage = panel.querySelector('.status-message');
                 
-                // Nur laden, wenn noch nicht geladen
-                if (panel.dataset.loaded === 'true') {
-                    return;
-                }
-
-                // 1. RSS-URL holen
                 const rssUrl = rssFeeds[tabId];
-
-                // PRÜFUNG: Sind die Platzhalter noch da?
-                if (!rssUrl || rssUrl.includes('PLACEHOLDER')) {
-                    statusMessage.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Bitte konfiguriere die RSS-URL im Code.`;
-                    statusMessage.style.color = '#c0392b';
-                    return;
-                }
-
-                // 2. Lade-Status anzeigen
-                statusMessage.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Lade Feed...`;
+                
+                // 1. Lade-Status anzeigen
                 statusMessage.style.display = 'block';
 
-                // 3. Daten über den rss2json-Proxy abrufen
+                // 2. Daten über den rss2json-Proxy abrufen
                 try {
                     const encodedRssUrl = encodeURIComponent(rssUrl);
-                    const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodedRssUrl}`;
+                    // Den Proxy-Dienst von rss2json verwenden
+                    const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodedRssUrl}&api_key=PLACEHOLDER_KEY`; 
+                    
+                    // Die API-Key ist nicht zwingend notwendig, da es ein kleiner Feed ist, 
+                    // wird aber oft für stabilen Betrieb empfohlen. Für einfache Tests weggelassen.
                     
                     const response = await fetch(apiUrl);
                     const data = await response.json();
@@ -352,40 +362,47 @@
                     if (data.status !== 'ok') {
                         throw new Error(data.message || 'Feed konnte nicht geladen werden.');
                     }
-
-                    // 4. Lade-Status ausblenden
-                    statusMessage.style.display = 'none';
-                    list.innerHTML = ''; // Liste leeren
-
-                    // 5. Kanal-Link setzen
-                    const channelLink = panel.querySelector('.channel-link');
-                    channelLink.href = data.feed.link;
-
-                    // 6. Die 5 neuesten Einträge anzeigen
-                    const itemsToShow = data.items.slice(0, 5);
                     
-                    itemsToShow.forEach(item => {
-                        const listItem = createFeedItem(item, tabId);
-                        list.appendChild(listItem);
-                    });
-
-                    // 7. Panel als "geladen" markieren
-                    panel.dataset.loaded = 'true';
+                    // Daten cachen und rendern
+                    cachedFeeds[tabId] = data;
+                    renderFeed(tabId, data);
 
                 } catch (error) {
-                    console.error('Fehler beim Abrufen des Feeds:', error);
-                    statusMessage.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> Feed konnte nicht geladen werden.`;
+                    console.error(`Fehler beim Abrufen des ${tabId}-Feeds:`, error);
+                    statusMessage.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> Feed konnte nicht geladen werden. Fehler: ${error.message.substring(0, 50)}...`;
                     statusMessage.style.color = '#c0392b';
+                    statusMessage.style.display = 'block';
                 }
             }
+            
+            // Funktion zum Rendern des Feeds aus den geladenen Daten
+            function renderFeed(tabId, data) {
+                const panel = document.getElementById(tabId);
+                const list = panel.querySelector('.feed-list');
+                const channelLink = panel.querySelector('.channel-link');
+                
+                list.innerHTML = ''; // Liste leeren
+                
+                // Kanal-Link setzen
+                channelLink.href = data.feed.link;
+                
+                // Die 5 neuesten Einträge anzeigen
+                const itemsToShow = data.items.slice(0, 5);
+                
+                itemsToShow.forEach(item => {
+                    const listItem = createFeedItem(item, tabId);
+                    list.appendChild(listItem);
+                });
+                
+                // Statusmeldung ausblenden und Panel als geladen markieren
+                panel.classList.add('loaded');
+                panel.dataset.loaded = 'true';
+            }
 
-            // Hilfsfunktion zum Erstellen eines Listeneintrags
+            // Hilfsfunktion zum Erstellen eines Listeneintrags (mit Link-Logik)
             function createFeedItem(item, type) {
                 const li = document.createElement('li');
-                li.className = 'feed-item';
-                if (type === 'spotify') {
-                    li.classList.add('spotify');
-                }
+                li.className = `feed-item ${type}`;
 
                 // Datum formatieren
                 const pubDate = new Date(item.pubDate).toLocaleDateString('de-DE', {
@@ -396,21 +413,45 @@
 
                 // Thumbnail: YouTube hat es in 'thumbnail', Podcasts oft in 'enclosure'
                 const thumbnailUrl = item.thumbnail || (item.enclosure && item.enclosure.link);
-
+                
+                // 1. Suche nach dem Spezial-Link in der Beschreibung (content)
+                const descriptionText = item.content || item.description || '';
+                const match = descriptionText.match(ahsLinkRegex);
+                const ahsLink = match ? match[1] : null;
+                
+                // 2. Erstelle den HTML-String
                 li.innerHTML = `
-                    <img src="${thumbnailUrl}" alt="Thumbnail" class="thumbnail" onerror="this.style.display='none'">
+                    <!-- Thumbnail: Klick auf das Bild öffnet das Video/die Episode -->
+                    <a href="${item.link}" target="_blank" rel="noopener noreferrer">
+                        <img src="${thumbnailUrl}" alt="Thumbnail" class="thumbnail" onerror="this.src='https://placehold.co/100x56/cccccc/000000?text=${type.toUpperCase()}'">
+                    </a>
+                    
                     <div class="feed-item-content">
-                        <a href="${item.link}" target="_blank" rel="noopener noreferrer" title="${item.title}">
-                            ${item.title}
-                        </a>
+                        <div class="item-title-row">
+                            <!-- Titel-Link -->
+                            <a href="${item.link}" class="title-link" target="_blank" rel="noopener noreferrer" title="${item.title}">
+                                ${item.title}
+                            </a>
+                            
+                            <!-- Spezial-Link (wenn gefunden) -->
+                            ${ahsLink ? `
+                                <a href="${ahsLink}" class="article-link" target="_blank" rel="noopener noreferrer" title="Zum Beitrag auf anton-hansen-schule.de">
+                                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                </a>
+                            ` : ''}
+                        </div>
                         <span class="feed-item-date">${pubDate}</span>
                     </div>
                 `;
                 return li;
             }
 
-            // Beim Start den ersten aktiven Tab laden
+            // Beim Start beide Feeds laden (Pre-Loading)
             loadFeed('youtube');
+            loadFeed('spotify');
+            
+            // Stelle sicher, dass der YouTube-Tab beim Start aktiv ist
+            activateTab('youtube');
         });
     </script>
 
