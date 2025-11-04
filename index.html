@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynamisches Feed Menü der Anton-Hansen-Schule</title>
+    <title>Neue Inhalte der Anton-Hansen-Schule</title>
 
     <!-- Importiert die Icon-Bibliothek (Font Awesome) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -41,6 +41,77 @@
             margin-bottom: 30px;
             text-align: center;
         }
+
+        /* --- Fabi & Leon Promotion Banner --- */
+        .fabi-leon-promo {
+            background-color: #f3f4f6; /* Hellgrauer Hintergrund */
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            max-width: 700px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .fabi-leon-promo h3 {
+            font-size: 1.25rem;
+            color: #002a5c;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        .fabi-leon-links {
+            display: flex;
+            flex-wrap: wrap; /* Wichtig für mobiles Design */
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .fabi-leon-links a {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 8px 15px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease;
+        }
+
+        /* Spezifische Link-Farben */
+        .fabi-leon-links a.web {
+            background-color: #ffffff;
+            color: #002a5c;
+            border: 1px solid #002a5c;
+        }
+        .fabi-leon-links a.web:hover {
+            background-color: #e0e7ff;
+        }
+        .fabi-leon-links a.yt {
+            background-color: #ff0000;
+            color: #ffffff;
+        }
+        .fabi-leon-links a.yt:hover {
+            background-color: #cc0000;
+        }
+        .fabi-leon-links a.insta {
+            background-color: #E1306C;
+            color: #ffffff;
+        }
+        .fabi-leon-links a.insta:hover {
+            background-color: #a80a42;
+        }
+        .fabi-leon-links a.linktree {
+            background-color: #607d8b; /* Graublau für Wonderlink */
+            color: #ffffff;
+        }
+        .fabi-leon-links a.linktree:hover {
+            background-color: #455a64;
+        }
+
 
         /* --- Tab-Navigation --- */
         .tab-navigation {
@@ -86,23 +157,78 @@
             border-radius: 16px;
             padding: 30px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative; 
+            min-height: 250px;
         }
 
         .tab-panel.active {
             display: block;
         }
 
-        /* --- Lade- & Fehlermeldungen --- */
+        /* --- Panel Header mit Refresh Button --- */
+        .panel-header {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        /* --- Lade- & Fehlermeldungen (Overlay) --- */
         .status-message {
-            text-align: center;
-            color: #666;
-            font-style: italic;
-            padding: 40px 0;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            color: #333;
+            font-size: 1.1rem;
+            border-radius: 16px;
+            transition: opacity 0.3s ease;
         }
         
-        /* Wird nach dem Laden ausgeblendet */
         .tab-panel.loaded .status-message {
-            display: none;
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .status-message i {
+            margin-right: 10px;
+        }
+
+        /* --- Refresh Button Styling --- */
+        .refresh-button {
+            background-color: #0056b3;
+            color: #ffffff;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.1s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            z-index: 20;
+        }
+        
+        .refresh-button:hover {
+            background-color: #006cde;
+        }
+
+        .refresh-button:active {
+            transform: scale(0.95);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        .refresh-button .fa-spin {
+            animation: fa-spin 1s linear infinite;
         }
 
         /* --- Feed-Liste (Videos / Folgen) --- */
@@ -150,7 +276,7 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            flex-grow: 1; /* Nimmt den restlichen Platz ein */
+            flex-grow: 1;
         }
         
         .item-title-row {
@@ -181,10 +307,10 @@
             color: #777;
         }
         
-        /* --- Spezial-Link Button (Typo3 Style) --- */
+        /* --- Spezial-Link Button (Typo3/Externer Link Style) --- */
         .article-link {
-            flex-shrink: 0; /* Verhindert, dass der Link schrumpft */
-            color: #0056b3; /* Hellere Akzentfarbe */
+            flex-shrink: 0;
+            color: #0056b3;
             font-size: 1.1rem;
             text-decoration: none;
             padding: 2px;
@@ -227,7 +353,6 @@
         /* --- Responsives Design (Mobile Anpassung) --- */
         @media (max-width: 768px) {
             .feed-item {
-                /* Auf Mobilgeräten Bild und Text untereinander */
                 flex-direction: column;
             }
             .feed-item img.thumbnail, .feed-item.spotify img.thumbnail {
@@ -238,11 +363,15 @@
             }
             
             .feed-item-content a.title-link {
-                white-space: normal; /* Erlaubt Umbruch des Titels */
+                white-space: normal;
             }
             .item-title-row {
-                /* Wenn die Zeile umbricht, wird der Link nach unten verschoben */
                 flex-wrap: wrap; 
+                margin-bottom: 10px;
+            }
+            .fabi-leon-links a {
+                flex-grow: 1; /* Links füllen die gesamte Breite auf kleinen Geräten */
+                justify-content: center;
             }
         }
     </style>
@@ -251,7 +380,7 @@
 
     <div class="menu-container">
         
-        <h2>Entdecke das Neueste</h2>
+        <h2>Neue Inhalte</h2>
 
         <!-- Tab-Buttons -->
         <div class="tab-navigation">
@@ -262,6 +391,26 @@
                 <i class="fa-brands fa-spotify"></i> Podcast
             </button>
         </div>
+        
+        <!-- Fabi & Leon Promotion -->
+        <div class="fabi-leon-promo">
+            <h3>Produziert von Fabi & Leon</h3>
+            <p style="font-size: 0.9rem; color: #555;">Das Management hinter YouTube und Spotify.</p>
+            <div class="fabi-leon-links">
+                <a href="https://www.fabiundleon.de" class="web" target="_blank" rel="noopener noreferrer">
+                    <i class="fa-solid fa-earth-europe"></i> Webseite
+                </a>
+                <a href="https://youtube.com/@FabiUndLeon" class="yt" target="_blank" rel="noopener noreferrer">
+                    <i class="fa-brands fa-youtube"></i> YouTube
+                </a>
+                <a href="https://instagram.com/fabiundleon" class="insta" target="_blank" rel="noopener noreferrer">
+                    <i class="fa-brands fa-instagram"></i> Instagram
+                </a>
+                <a href="https://wonderl.ink/@FabiUndLeon" class="linktree" target="_blank" rel="noopener noreferrer">
+                    <i class="fa-solid fa-link"></i> Alle Links
+                </a>
+            </div>
+        </div>
 
         <!-- Tab-Inhalte -->
         <div class="tab-content-wrapper">
@@ -270,6 +419,11 @@
             <div class="tab-panel active" id="youtube">
                 <div class="status-message">
                     <i class="fa-solid fa-spinner fa-spin"></i> Lade neueste Videos...
+                </div>
+                <div class="panel-header">
+                    <button class="refresh-button" data-tab="youtube" title="Daten neu abrufen">
+                        <i class="fa-solid fa-arrows-rotate"></i> Aktualisieren
+                    </button>
                 </div>
                 <ul class="feed-list" id="youtube-feed-list"></ul>
                 <div class="channel-link-container">
@@ -281,8 +435,13 @@
 
             <!-- Spotify Panel -->
             <div class="tab-panel" id="spotify">
-                <div class="status-message">
+                 <div class="status-message">
                     <i class="fa-solid fa-spinner fa-spin"></i> Lade neueste Folgen...
+                </div>
+                <div class="panel-header">
+                    <button class="refresh-button" data-tab="spotify" title="Daten neu abrufen">
+                        <i class="fa-solid fa-arrows-rotate"></i> Aktualisieren
+                    </button>
                 </div>
                 <ul class="feed-list" id="spotify-feed-list"></ul>
                 <div class="channel-link-container">
@@ -296,16 +455,23 @@
     </div>
 
     <script type="module">
-        // --- KONFIGURATION (Werte vom Benutzer) ---
-        
+        // --- KONFIGURATION (Deine Daten) ---
         const rssFeeds = {
+            // Wichtig: Dies sind die technischen RSS-Links zum Abrufen der Daten
             youtube: 'https://www.youtube.com/feeds/videos.xml?channel_id=UC9GtyN6irUK93FwmYsnTHkw',
-            spotify: 'https://anchor.fm/s/105dbc5d0/podcast/rss'
+            spotify: 'https://anchor.fm/s/105dbc5d0/podcast/rss' 
+        };
+
+        const publicChannelLinks = {
+            // Explizite öffentliche Links für die großen Buttons unten
+            // Der Spotify-Link wurde auf deinen Wunsch aktualisiert:
+            youtube: 'https://www.youtube.com/@AntonHansenSchule', 
+            spotify: 'https://open.spotify.com/show/1gg6Ky5FUDwSekAQ9IdEdv?si=7eLISP9URn2EQ4MEYZwNAQ' 
         };
         
         const cachedFeeds = {}; // Speichert die geladenen Daten
         
-        // Regulärer Ausdruck, um einen Link zur anton-hansen-schule.de zu finden
+        // Regex für Links zu anton-hansen-schule.de (überprüft content ODER description)
         const ahsLinkRegex = /(https?:\/\/[^\s"]*anton-hansen-schule\.de[^\s"]*)/i;
         
         // ------------------------------------------
@@ -314,6 +480,7 @@
             
             const tabButtons = document.querySelectorAll('.tab-button');
             const tabPanels = document.querySelectorAll('.tab-panel');
+            const refreshButtons = document.querySelectorAll('.refresh-button');
 
             // Setzt den korrekten aktiven Tab
             function activateTab(tabId) {
@@ -330,31 +497,39 @@
                     activateTab(event.currentTarget.dataset.tab);
                 });
             });
+            
+            // Klick-Listener für den Refresh-Button
+            refreshButtons.forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const tabId = event.currentTarget.dataset.tab;
+                    // Erzwingt das Laden, indem der Cache ignoriert wird
+                    loadFeed(tabId, true); 
+                });
+            });
 
             // Funktion zum Laden des Feeds
-            async function loadFeed(tabId) {
-                // Wenn Daten bereits im Cache sind, überspringen
-                if (cachedFeeds[tabId]) {
+            async function loadFeed(tabId, forceRefresh = false) {
+                const panel = document.getElementById(tabId);
+                const statusMessage = panel.querySelector('.status-message');
+                const refreshIcon = panel.querySelector('.refresh-button i');
+                
+                // 1. Wenn nicht erzwungen und im Cache, abbrechen
+                if (cachedFeeds[tabId] && !forceRefresh) {
                     renderFeed(tabId, cachedFeeds[tabId]);
                     return;
                 }
                 
-                const panel = document.getElementById(tabId);
-                const statusMessage = panel.querySelector('.status-message');
+                // 2. Lade-Status und Animation aktivieren
+                panel.classList.remove('loaded');
+                statusMessage.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Lade ${tabId === 'youtube' ? 'Videos' : 'Folgen'} neu...`;
+                refreshIcon.classList.add('fa-spin');
                 
                 const rssUrl = rssFeeds[tabId];
-                
-                // 1. Lade-Status anzeigen
-                statusMessage.style.display = 'block';
 
-                // 2. Daten über den rss2json-Proxy abrufen
+                // 3. Daten über den rss2json-Proxy abrufen
                 try {
                     const encodedRssUrl = encodeURIComponent(rssUrl);
-                    // Den Proxy-Dienst von rss2json verwenden
                     const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodedRssUrl}`; 
-                    
-                    // Die API-Key ist nicht zwingend notwendig, da es ein kleiner Feed ist, 
-                    // wird aber oft für stabilen Betrieb empfohlen. Für einfache Tests weggelassen.
                     
                     const response = await fetch(apiUrl);
                     const data = await response.json();
@@ -369,9 +544,12 @@
 
                 } catch (error) {
                     console.error(`Fehler beim Abrufen des ${tabId}-Feeds:`, error);
-                    statusMessage.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> Feed konnte nicht geladen werden. Fehler: ${error.message.substring(0, 50)}...`;
+                    statusMessage.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> Fehler beim Laden. Versuche es später erneut.`;
                     statusMessage.style.color = '#c0392b';
-                    statusMessage.style.display = 'block';
+
+                } finally {
+                    // 4. Lade-Animation beenden (unabhängig vom Erfolg/Fehler)
+                    refreshIcon.classList.remove('fa-spin');
                 }
             }
             
@@ -383,20 +561,37 @@
                 
                 list.innerHTML = ''; // Liste leeren
                 
-                // Kanal-Link setzen
-                channelLink.href = data.feed.link;
+                // 1. Kanal-Link setzen: Bevorzugt den expliziten Link aus der Konfiguration
+                let channelUrl;
+
+                if (publicChannelLinks[tabId]) {
+                    channelUrl = publicChannelLinks[tabId];
+                } else {
+                    // Fallback: Link aus den Feed-Daten
+                    channelUrl = data.feed.link;
+                }
                 
-                // Die 5 neuesten Einträge anzeigen
+                // Für YouTube: Abo-Bestätigungsparameter hinzufügen, wenn es eine Kanal-URL ist.
+                if (tabId === 'youtube' && channelUrl.includes('youtube.com/channel/')) {
+                    channelUrl += (channelUrl.includes('?') ? '&' : '?') + 'sub_confirmation=1';
+                }
+
+                channelLink.href = channelUrl;
+                
+                // 2. Die 5 neuesten Einträge anzeigen
                 const itemsToShow = data.items.slice(0, 5);
                 
-                itemsToShow.forEach(item => {
-                    const listItem = createFeedItem(item, tabId);
-                    list.appendChild(listItem);
-                });
+                if (itemsToShow.length === 0) {
+                     panel.querySelector('.status-message').innerHTML = `<i class="fa-solid fa-info-circle"></i> Keine Einträge gefunden.`;
+                } else {
+                    itemsToShow.forEach(item => {
+                        const listItem = createFeedItem(item, tabId);
+                        list.appendChild(listItem);
+                    });
+                }
                 
-                // Statusmeldung ausblenden und Panel als geladen markieren
+                // 3. Statusmeldung ausblenden und Panel als geladen markieren
                 panel.classList.add('loaded');
-                panel.dataset.loaded = 'true';
             }
 
             // Hilfsfunktion zum Erstellen eines Listeneintrags (mit Link-Logik)
@@ -423,7 +618,7 @@
                 li.innerHTML = `
                     <!-- Thumbnail: Klick auf das Bild öffnet das Video/die Episode -->
                     <a href="${item.link}" target="_blank" rel="noopener noreferrer">
-                        <img src="${thumbnailUrl}" alt="Thumbnail" class="thumbnail" onerror="this.src='https://placehold.co/100x56/cccccc/000000?text=${type.toUpperCase()}'">
+                        <img src="${thumbnailUrl}" alt="Thumbnail" class="thumbnail" onerror="this.src='https://placehold.co/100x56/cccccc/333333?text=${type.toUpperCase()}'">
                     </a>
                     
                     <div class="feed-item-content">
@@ -446,11 +641,9 @@
                 return li;
             }
 
-            // Beim Start beide Feeds laden (Pre-Loading)
+            // Beim Start beide Feeds laden und den YouTube-Tab aktivieren
             loadFeed('youtube');
             loadFeed('spotify');
-            
-            // Stelle sicher, dass der YouTube-Tab beim Start aktiv ist
             activateTab('youtube');
         });
     </script>
