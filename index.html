@@ -846,29 +846,65 @@
                 const contentText = item.content || '';
                 const combinedText = descriptionText + ' ' + contentText;
                 
-                console.log(`[DEBUG - ${item.title}] Beschreibungslänge: ${combinedText.length}`);
+                // DEBUG: Zeige die komplette Beschreibung
+                console.log(`\n========== DEBUG: ${item.title} ==========`);
+                console.log('📝 Description Feld:', item.description ? `Ja (${item.description.length} Zeichen)` : 'LEER');
+                console.log('📝 Content Feld:', item.content ? `Ja (${item.content.length} Zeichen)` : 'LEER');
+                console.log('📝 Kombinierte Länge:', combinedText.length);
+                
+                if (combinedText.length > 0) {
+                    console.log('📄 Erste 1000 Zeichen der Beschreibung:');
+                    console.log(combinedText.substring(0, 1000));
+                    console.log('...');
+                }
+                
+                // Test: Suche nach ALLEN URLs (nicht nur anton-hansen-schule.de)
+                const allUrls = combinedText.match(/https?:\/\/[^\s"<>)\]']+/gi);
+                console.log('🔗 ALLE gefundenen URLs:', allUrls ? allUrls.length : 0);
+                if (allUrls) {
+                    allUrls.forEach(url => console.log('  - ' + url));
+                }
                 
                 // Finde alle anton-hansen-schule.de Links
                 const ahsLinksSet = new Set();
-                let match;
-                const regex = new RegExp(ahsLinkRegex);
                 
-                while ((match = regex.exec(combinedText)) !== null) {
-                    const link = match[0];
-                    // Bereinige den Link von HTML-Entities und Trailing-Zeichen
-                    const cleanLink = link
-                        .replace(/&amp;/g, '&')
-                        .replace(/[<>"']+$/, '')
-                        .trim();
-                    
-                    if (!cleanLink.includes('1234.de')) {
-                        ahsLinksSet.add(cleanLink);
-                    }
+                // Erstelle eine neue Regex-Instanz für jeden Durchlauf
+                const linkMatches = combinedText.match(/https?:\/\/(?:[a-zA-Z0-9-]+\.)?anton-hansen-schule\.de[^\s"<>)\]']*/gi);
+                
+                console.log('🎯 Anton-Hansen-Schule Links gefunden:', linkMatches ? linkMatches.length : 0);
+                if (linkMatches) {
+                    linkMatches.forEach(link => console.log('  ✓ ' + link));
+                }
+                
+                if (linkMatches) {
+                    linkMatches.forEach(link => {
+                        // Bereinige den Link von HTML-Entities und Trailing-Zeichen
+                        let cleanLink = link
+                            .replace(/&amp;/g, '&')
+                            .replace(/&quot;/g, '')
+                            .replace(/&#39;/g, '')
+                            .replace(/&lt;/g, '<')
+                            .replace(/&gt;/g, '>')
+                            .replace(/[,;.!?]+$/, '') // Entferne Satzzeichen am Ende
+                            .trim();
+                        
+                        // Entferne möglicherweise angehängte HTML-Tags
+                        cleanLink = cleanLink.split('<')[0];
+                        
+                        console.log('  ➜ Bereinigt:', cleanLink);
+                        
+                        // Ignoriere Test-Domains
+                        if (!cleanLink.includes('test123.de') && !cleanLink.includes('1234.de')) {
+                            ahsLinksSet.add(cleanLink);
+                        }
+                    });
                 }
                 
                 const ahsLinks = Array.from(ahsLinksSet);
                 
-                console.log(`[DEBUG - ${item.title}] Gefundene Links:`, ahsLinks);
+                console.log(`✅ Finale verwendete Links: ${ahsLinks.length}`);
+                ahsLinks.forEach(link => console.log('  🔗 ' + link));
+                console.log('==========================================\n');
                 
                 li.innerHTML = `
                     <a href="${item.link}" target="_blank" rel="noopener noreferrer">
@@ -884,7 +920,7 @@
                         
                         ${ahsLinks.length > 0 ? `
                             <button class="article-link-button" data-links='${JSON.stringify(ahsLinks)}' title="Beitrag dazu lesen">
-                                Beitrag dazu lesen <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                ${ahsLinks.length === 1 ? 'Beitrag dazu lesen' : ahsLinks.length + ' Beiträge verfügbar'} <i class="fa-solid fa-arrow-up-right-from-square"></i>
                             </button>
                         ` : ''}
                     </div>
