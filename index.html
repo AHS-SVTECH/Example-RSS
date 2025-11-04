@@ -621,8 +621,8 @@
             spotify: ITEMS_PER_LOAD
         };
         
-        // Verbesserte Regex mit mehr Flexibilität
-        const ahsLinkRegex = /https?:\/\/(?:www\.)?anton-hansen-schule\.de[^\s"<>]*/gi;
+        // Regex findet alle Links mit anton-hansen-schule.de (inkl. Subdomains)
+        const ahsLinkRegex = /https?:\/\/(?:[a-zA-Z0-9-]+\.)?anton-hansen-schule\.de[^\s"<>)\]']*/gi;
         
         document.addEventListener('DOMContentLoaded', () => {
             
