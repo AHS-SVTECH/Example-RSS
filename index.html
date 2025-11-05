@@ -82,7 +82,6 @@
         }
         .tab-panel.active { display: block; }
         
-        /* --- GEÄNDERT --- (Für Zeitstempel) */
         .panel-header { 
             display: flex; 
             justify-content: space-between; 
@@ -92,7 +91,6 @@
             flex-wrap: wrap;
         }
         
-        /* --- NEU --- (Für Zeitstempel) */
         .last-updated {
             font-size: 0.8rem;
             color: #666;
@@ -162,6 +160,13 @@
         .title-link:hover { color: #002a5c; }
         .feed-item-date { font-size: 0.85rem; color: #777; margin-bottom: 8px; }
         
+        /* --- NEU: Wrapper für Buttons --- */
+        .buttons-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px; /* Abstand zwischen Buttons */
+        }
+        
         .article-link-button {
             background: #0056b3;
             color: #fff;
@@ -177,6 +182,14 @@
             text-decoration: none;
         }
         .article-link-button:hover { background: #004085; transform: translateY(-1px); }
+        
+        /* --- NEU: Style für "Andere Links" Button --- */
+        .article-link-button.other-link {
+            background: #607d8b; /* Grauerer Farbton */
+        }
+        .article-link-button.other-link:hover {
+            background: #455a64;
+        }
         
         .load-more-button {
             width: 100%;
@@ -300,7 +313,6 @@
         <div class="tab-content-wrapper">
             <div class="tab-panel active" id="youtube">
                 <div class="status-message"><i class="fa-solid fa-spinner fa-spin"></i> Lade Videos...</div>
-                <!-- --- GEÄNDERT --- (Panel-Header für Zeitstempel) -->
                 <div class="panel-header">
                     <div class="last-updated" id="youtube-last-updated"></div>
                     <button class="refresh-button" data-tab="youtube">
@@ -318,7 +330,6 @@
 
             <div class="tab-panel" id="spotify">
                 <div class="status-message"><i class="fa-solid fa-spinner fa-spin"></i> Lade Folgen...</div>
-                 <!-- --- GEÄNDERT --- (Panel-Header für Zeitstempel) -->
                 <div class="panel-header">
                     <div class="last-updated" id="spotify-last-updated"></div>
                     <button class="refresh-button" data-tab="spotify">
@@ -339,7 +350,7 @@
     <div id="multiLinkModal" class="modal">
         <div class="modal-content">
             <button class="close-button">&times;</button>
-            <h3>Beitrag lesen</h3>
+            <h3 id="modal-title">Beitrag lesen</h3> <!-- ID HINZUGEFÜGT -->
             <div class="modal-link-list"></div>
         </div>
     </div>
@@ -348,13 +359,13 @@
         const API_KEY = 'AIzaSyCyQLP8Tk1u7-VWgGRfleZ6_ojcjkIDre4';
         const CHANNEL_ID = 'UC9GtyN6irUK93FwmYsnTHkw';
         
-        // --- GEÄNDERT --- (Wunsch: 3 Items laden)
+        // 3 Items pro Ladung, wie gewünscht
         const ITEMS_PER_LOAD = 3;
         
         let cache = {};
         let limits = { youtube: ITEMS_PER_LOAD, spotify: ITEMS_PER_LOAD };
 
-        // --- NEU --- (Helfer-Funktion für Zeitstempel)
+        // Zeitstempel-Anzeige
         function updateTimestamp(tab, dateObj) {
             const el = document.getElementById(`${tab}-last-updated`);
             if (el) {
@@ -363,16 +374,36 @@
             }
         }
 
-        // Links extrahieren (Unverändert)
-        function extractLinks(text) {
-            if (!text) return [];
-            const matches = text.match(/https?:\/\/(www\.)?anton-hansen-schule\.de[^\s<>")]+/gi) || [];
-            return [...new Set(matches)];
+        // --- ÜBERARBEITET: Links extrahieren ---
+        // Erkennt jetzt AHS-Links und "andere" Links getrennt
+        function processLinks(text) {
+            if (!text) return { ahsLinks: [], otherLinks: [] };
+            
+            // Alle Links finden
+            const allLinks = text.match(/https?:\/\/[^\s<>")]+/gi) || [];
+            const uniqueLinks = [...new Set(allLinks)];
+            
+            const ahsLinks = [];
+            const otherLinks = [];
+            
+            // Regex, um AHS-Links zu erkennen
+            const ahsRegex = /https?:\/\/(www\.)?anton-hansen-schule\.de/i;
+            
+            uniqueLinks.forEach(link => {
+                if (ahsRegex.test(link)) {
+                    ahsLinks.push(link);
+                } else {
+                    otherLinks.push(link);
+                }
+            });
+            
+            return { ahsLinks, otherLinks };
         }
 
-        // Seitentitel abrufen (Unverändert)
+        // Seitentitel abrufen
         async function getTitle(url) {
             try {
+                // Proxy, um CORS-Probleme zu umgehen
                 const r = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(url));
                 const d = await r.json();
                 const doc = new DOMParser().parseFromString(d.contents, 'text/html');
@@ -380,11 +411,13 @@
             } catch { return 'Beitrag öffnen'; }
         }
 
-        // Modal öffnen (Unverändert)
-        window.openModal = async function(links) {
+        // --- ÜBERARBEITET: Modal öffnen (nimmt jetzt Titel an) ---
+        window.openModal = async function(links, title = "Beitrag lesen") {
             const modal = document.getElementById('multiLinkModal');
             const list = modal.querySelector('.modal-link-list');
+            const titleEl = document.getElementById('modal-title');
             
+            titleEl.textContent = title; // Titel im Modal setzen
             list.innerHTML = '<div class="modal-loading"><i class="fa-solid fa-spinner fa-spin"></i> Lade...</div>';
             modal.classList.add('active');
             
@@ -394,7 +427,7 @@
             ).join('');
         };
 
-        // YouTube laden (--- GEÄNDERT --- Logik korrigiert + Zeitstempel)
+        // YouTube laden (Holt jetzt auch Descriptions)
         async function loadYouTube(refresh = false) {
             const panel = document.getElementById('youtube');
             const btn = panel.querySelector('.refresh-button');
@@ -402,10 +435,10 @@
             
             if (cache.youtube && !refresh) {
                 renderYouTube(cache.youtube);
-                if (cache.youtube_timestamp) { // Zeitstempel aus Cache laden
+                if (cache.youtube_timestamp) {
                     updateTimestamp('youtube', cache.youtube_timestamp);
                 }
-                panel.classList.add('loaded'); // Lade-Spinner sicher entfernen
+                panel.classList.add('loaded');
                 return;
             }
             
@@ -414,53 +447,41 @@
             icon.classList.add('fa-spin');
             
             try {
-                // RSS laden
                 const rssUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${CHANNEL_ID}`;
                 const r1 = await fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(rssUrl));
                 const rssData = await r1.json();
                 
                 if (rssData.status !== 'ok') throw new Error('RSS failed');
                 
-                // Video IDs extrahieren
                 const videoIds = rssData.items.map(item => {
                     const match = item.link.match(/v=([^&]+)/);
                     return match ? match[1] : null;
                 }).filter(Boolean);
                 
-                console.log('Video IDs:', videoIds);
-                
-                // API Details laden (nur wenn IDs vorhanden sind)
-                let apiData = { items: [] }; // Fallback
+                let apiData = { items: [] };
                 if (videoIds.length > 0) {
                      const apiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoIds.join(',')}&key=${API_KEY}`;
                      const r2 = await fetch(apiUrl);
                      apiData = await r2.json();
-                     console.log('YouTube API:', apiData);
-                } else {
-                    console.log('Keine Video-IDs gefunden, überspringe API-Aufruf.');
                 }
                 
-                // Descriptions zusammenführen
                 const descs = {};
                 if (apiData.items) {
                     apiData.items.forEach(v => { descs[v.id] = v.snippet.description; });
                 }
                 
-                // Daten mergen (wichtig: description wird hier zugewiesen)
+                // WICHTIG: Description wird hier mit den RSS-Daten gemerged
                 const items = rssData.items.map(item => {
                     const videoId = item.link.match(/v=([^&]+)/)?.[1];
                     return {
                         ...item,
                         videoId,
-                        description: descs[videoId] || '' // <-- Hier!
+                        description: descs[videoId] || '' 
                     };
                 });
                 
-                console.log('Final items:', items);
-                
                 cache.youtube = items;
                 
-                // --- NEU --- Zeitstempel setzen
                 const timestamp = new Date();
                 cache.youtube_timestamp = timestamp;
                 updateTimestamp('youtube', timestamp);
@@ -477,7 +498,7 @@
             }
         }
 
-        // YouTube rendern (Unverändert)
+        // --- ÜBERARBEITET: YouTube rendern (mit neuer Button-Logik) ---
         function renderYouTube(items) {
             const list = document.getElementById('youtube-feed-list');
             const btn = document.querySelector('#youtube .load-more-button');
@@ -490,17 +511,32 @@
                 li.className = 'feed-item';
                 
                 const date = new Date(item.pubDate).toLocaleDateString('de-DE');
-                const links = extractLinks(item.description); // <-- Nutzt die description
+                // Holt BEIDE Link-Typen
+                const { ahsLinks, otherLinks } = processLinks(item.description);
                 
-                let linkBtn = '';
-                if (links.length === 1) {
-                    linkBtn = `<a href="${links[0]}" target="_blank" class="article-link-button">
+                // Button 1: AHS-Links (blau)
+                let ahsLinkBtn = '';
+                if (ahsLinks.length === 1) {
+                    ahsLinkBtn = `<a href="${ahsLinks[0]}" target="_blank" class="article-link-button">
                         <i class="fa-solid fa-file-lines"></i> Beitrag dazu lesen
                     </a>`;
-                } else if (links.length > 1) {
-                    const linksJson = JSON.stringify(links).replace(/"/g, '&quot;');
-                    linkBtn = `<button class="article-link-button" onclick="openModal(${linksJson})">
-                        <i class="fa-solid fa-file-lines"></i> Beitrag lesen + ${links.length - 1} weitere
+                } else if (ahsLinks.length > 1) {
+                    const linksJson = JSON.stringify(ahsLinks).replace(/"/g, '&quot;');
+                    ahsLinkBtn = `<button class="article-link-button" onclick="openModal(${linksJson}, 'Beiträge lesen')">
+                        <i class="fa-solid fa-file-lines"></i> Beiträge lesen (${ahsLinks.length})
+                    </button>`;
+                }
+
+                // Button 2: Andere Links (grau)
+                let otherLinkBtn = '';
+                if (otherLinks.length === 1) {
+                    otherLinkBtn = `<a href="${otherLinks[0]}" target="_blank" class="article-link-button other-link">
+                        <i class="fa-solid fa-link"></i> Weiterer Link
+                    </a>`;
+                } else if (otherLinks.length > 1) {
+                    const linksJson = JSON.stringify(otherLinks).replace(/"/g, '&quot;');
+                    otherLinkBtn = `<button class="article-link-button other-link" onclick="openModal(${linksJson}, 'Weitere Links')">
+                        <i class="fa-solid fa-link"></i> Weitere Links (${otherLinks.length})
                     </button>`;
                 }
                 
@@ -509,7 +545,10 @@
                     <div class="feed-item-content">
                         <a href="${item.link}" target="_blank" class="title-link">${item.title}</a>
                         <div class="feed-item-date">${date}</div>
-                        ${linkBtn}
+                        <div class="buttons-wrapper">
+                            ${ahsLinkBtn}
+                            ${otherLinkBtn}
+                        </div>
                     </div>
                 `;
                 list.appendChild(li);
@@ -518,7 +557,7 @@
             btn.style.display = show.length < items.length ? 'block' : 'none';
         }
 
-        // Spotify laden (--- GEÄNDERT --- Zeitstempel)
+        // Spotify laden
         async function loadSpotify(refresh = false) {
             const panel = document.getElementById('spotify');
             const btn = panel.querySelector('.refresh-button');
@@ -526,7 +565,7 @@
             
             if (cache.spotify && !refresh) {
                 renderSpotify(cache.spotify);
-                 if (cache.spotify_timestamp) { // Zeitstempel aus Cache laden
+                if (cache.spotify_timestamp) {
                     updateTimestamp('spotify', cache.spotify_timestamp);
                 }
                 panel.classList.add('loaded');
@@ -542,13 +581,10 @@
                 const r = await fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(rssUrl));
                 const data = await r.json();
                 
-                console.log('Spotify RSS:', data);
-                
                 if (data.status !== 'ok') throw new Error('RSS failed');
                 
                 cache.spotify = data.items;
-
-                // --- NEU --- Zeitstempel setzen
+                
                 const timestamp = new Date();
                 cache.spotify_timestamp = timestamp;
                 updateTimestamp('spotify', timestamp);
@@ -565,7 +601,7 @@
             }
         }
 
-        // Spotify rendern (Unverändert)
+        // --- ÜBERARBEITET: Spotify rendern (mit neuer Button-Logik) ---
         function renderSpotify(items) {
             const list = document.getElementById('spotify-feed-list');
             const btn = document.querySelector('#spotify .load-more-button');
@@ -578,12 +614,44 @@
                 li.className = 'feed-item spotify';
                 
                 const date = new Date(item.pubDate).toLocaleDateString('de-DE');
+                // Holt BEIDE Link-Typen aus der Spotify-Description
+                const { ahsLinks, otherLinks } = processLinks(item.description); // <-- HIER GEÄNDERT
+
+                // Button 1: AHS-Links (blau)
+                let ahsLinkBtn = '';
+                if (ahsLinks.length === 1) {
+                    ahsLinkBtn = `<a href="${ahsLinks[0]}" target="_blank" class="article-link-button">
+                        <i class="fa-solid fa-file-lines"></i> Beitrag dazu lesen
+                    </a>`;
+                } else if (ahsLinks.length > 1) {
+                    const linksJson = JSON.stringify(ahsLinks).replace(/"/g, '&quot;');
+                    ahsLinkBtn = `<button class="article-link-button" onclick="openModal(${linksJson}, 'Beiträge lesen')">
+                        <i class="fa-solid fa-file-lines"></i> Beiträge lesen (${ahsLinks.length})
+                    </button>`;
+                }
+
+                // Button 2: Andere Links (grau)
+                let otherLinkBtn = '';
+                if (otherLinks.length === 1) {
+                    otherLinkBtn = `<a href="${otherLinks[0]}" target="_blank" class="article-link-button other-link">
+                        <i class="fa-solid fa-link"></i> Weiterer Link
+                    </a>`;
+                } else if (otherLinks.length > 1) {
+                    const linksJson = JSON.stringify(otherLinks).replace(/"/g, '&quot;');
+                    otherLinkBtn = `<button class="article-link-button other-link" onclick="openModal(${linksJson}, 'Weitere Links')">
+                        <i class="fa-solid fa-link"></i> Weitere Links (${otherLinks.length})
+                    </button>`;
+                }
                 
                 li.innerHTML = `
                     <img src="${item.thumbnail || item.enclosure?.link || ''}" onclick="window.open('${item.link}', '_blank')">
                     <div class="feed-item-content">
                         <a href="${item.link}" target="_blank" class="title-link">${item.title}</a>
                         <div class="feed-item-date">${date}</div>
+                        <div class="buttons-wrapper">
+                            ${ahsLinkBtn}
+                            ${otherLinkBtn}
+                        </div>
                     </div>
                 `;
                 list.appendChild(li);
@@ -592,7 +660,7 @@
             btn.style.display = show.length < items.length ? 'block' : 'none';
         }
 
-        // Events (--- GEÄNDERT --- Refresh setzt Limit zurück)
+        // Events (Unverändert)
         document.addEventListener('DOMContentLoaded', () => {
             // Tabs
             document.querySelectorAll('.tab-button').forEach(btn => {
@@ -611,17 +679,17 @@
             document.querySelectorAll('.refresh-button').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const tab = btn.dataset.tab;
-                    limits[tab] = ITEMS_PER_LOAD; // Wichtig: Setzt beim Refresh auf 3 zurück
+                    limits[tab] = ITEMS_PER_LOAD; // Reset auf 3
                     if (tab === 'youtube') loadYouTube(true);
                     if (tab === 'spotify') loadSpotify(true);
                 });
             });
             
-            // Load More (lädt 3 weitere)
+            // Load More
             document.querySelectorAll('.load-more-button').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const tab = btn.dataset.tab;
-                    limits[tab] += ITEMS_PER_LOAD;
+                    limits[tab] += ITEMS_PER_LOAD; // Lade 3 weitere
                     if (tab === 'youtube') renderYouTube(cache.youtube);
                     if (tab === 'spotify') renderSpotify(cache.spotify);
                 });
