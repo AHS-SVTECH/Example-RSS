@@ -267,10 +267,6 @@
             cursor: not-allowed;
         }
 
-        .refresh-button .fa-spin {
-            animation: fa-spin 1s linear infinite;
-        }
-
         .feed-list {
             list-style: none;
             padding: 0;
@@ -445,11 +441,8 @@
             justify-content: center;
         }
 
-        .close-button:hover,
-        .close-button:focus {
+        .close-button:hover {
             color: #333;
-            text-decoration: none;
-            cursor: pointer;
         }
 
         .modal-content h3 {
@@ -487,44 +480,28 @@
             transform: translateY(-1px);
         }
 
-        .modal-link-list a i {
-            flex-shrink: 0;
-        }
-
         .modal-loading {
             text-align: center;
             color: #777;
             padding: 20px;
         }
 
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .fa-spin {
+            animation: spin 1s linear infinite;
+        }
+
         @media (max-width: 768px) {
             .feed-item {
                 flex-direction: column;
             }
-            .feed-item img.thumbnail, .feed-item.spotify img.thumbnail {
+            .feed-item img.thumbnail {
                 width: 100%;
                 height: auto;
-                max-width: 100%;
-                margin-bottom: 5px;
-            }
-            
-            .feed-item-content a.title-link {
-                white-space: normal;
-            }
-            .fabi-leon-links a {
-                flex-grow: 1; 
-                justify-content: center;
-            }
-            .panel-header {
-                justify-content: space-between; 
-                text-align: right;
-            }
-            .panel-footer .channel-link {
-                max-width: none; 
-            }
-            .modal-content {
-                width: 95%;
-                padding: 20px;
             }
         }
     </style>
@@ -571,7 +548,7 @@
                 </div>
                 <div class="panel-header">
                     <span class="refresh-feedback"></span>
-                    <button class="refresh-button" data-tab="youtube" title="Daten neu abrufen">
+                    <button class="refresh-button" data-tab="youtube">
                         <i class="fa-solid fa-arrows-rotate"></i> Aktualisieren
                     </button>
                 </div>
@@ -593,7 +570,7 @@
                 </div>
                 <div class="panel-header">
                     <span class="refresh-feedback"></span>
-                    <button class="refresh-button" data-tab="spotify" title="Daten neu abrufen">
+                    <button class="refresh-button" data-tab="spotify">
                         <i class="fa-solid fa-arrows-rotate"></i> Aktualisieren
                     </button>
                 </div>
@@ -603,7 +580,7 @@
                 </button>
                 
                 <div class="panel-footer">
-                    <a href="https://open.spotify.com/show/1gg6Ky5FUDwSekAQ9IdEdv?si=7eLISP9URn2EQ4MEYZwNAQ" class="channel-link spotify" target="_blank" rel="noopener noreferrer">
+                    <a href="https://open.spotify.com/show/1gg6Ky5FUDwSekAQ9IdEdv" class="channel-link spotify" target="_blank" rel="noopener noreferrer">
                         <i class="fa-brands fa-spotify"></i> Zum Spotify-Podcast
                     </a>
                 </div>
@@ -621,242 +598,260 @@
     </div>
 
     <script>
-        const ITEMS_PER_LOAD = 5;
-        const YOUTUBE_API_KEY = 'AIzaSyCyQLP8Tk1u7-VWgGRfleZ6_ojcjkIDre4';
-        const YOUTUBE_CHANNEL_ID = 'UC9GtyN6irUK93FwmYsnTHkw';
-
-        const cachedFeeds = {};
-        const displayLimits = {
-            youtube: ITEMS_PER_LOAD,
-            spotify: ITEMS_PER_LOAD
-        };
-        const lastUpdateTimes = {
-            youtube: null,
-            spotify: null
+        const APP = {
+            ITEMS_PER_LOAD: 5,
+            API_KEY: 'AIzaSyCyQLP8Tk1u7-VWgGRfleZ6_ojcjkIDre4',
+            CHANNEL_ID: 'UC9GtyN6irUK93FwmYsnTHkw',
+            cache: {},
+            limits: { youtube: 5, spotify: 5 }
         };
 
-        // Extrahiere Anton-Hansen-Schule Links aus Beschreibung
-        function extractAntonHansenLinks(description) {
-            if (!description) return [];
-            
-            const urlRegex = /https?:\/\/(www\.)?anton-hansen-schule\.de[^\s<>")]+/gi;
-            const links = description.match(urlRegex) || [];
-            
-            return [...new Set(links)];
+        // Extrahiere Links
+        function extractLinks(text) {
+            if (!text) return [];
+            const regex = /https?:\/\/(www\.)?anton-hansen-schule\.de[^\s<>")]+/gi;
+            return [...new Set(text.match(regex) || [])];
         }
 
-        // Hole Seitentitel via CORS Proxy
-        async function fetchPageTitle(url) {
+        // Hole Seitentitel
+        async function getTitle(url) {
             try {
-                const corsProxy = 'https://api.allorigins.win/get?url=';
-                const response = await fetch(corsProxy + encodeURIComponent(url));
-                const data = await response.json();
-                
-                if (data.contents) {
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(data.contents, 'text/html');
-                    
-                    const title = doc.querySelector('title')?.textContent?.trim();
-                    if (title) return title;
-                    
-                    const ogTitle = doc.querySelector('meta[property="og:title"]')?.getAttribute('content')?.trim();
-                    if (ogTitle) return ogTitle;
-                }
-                
-                const urlObj = new URL(url);
-                const pathParts = urlObj.pathname.split('/').filter(p => p);
-                if (pathParts.length > 0) {
-                    return decodeURIComponent(pathParts[pathParts.length - 1])
-                        .replace(/-/g, ' ')
-                        .replace(/_/g, ' ')
-                        .replace(/\.html?$/i, '');
-                }
-                
-                return 'Beitrag öffnen';
-            } catch (error) {
-                console.error('Fehler beim Abrufen des Titels:', error);
+                const res = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(url));
+                const data = await res.json();
+                const doc = new DOMParser().parseFromString(data.contents, 'text/html');
+                return doc.querySelector('title')?.textContent?.trim() || 'Beitrag öffnen';
+            } catch {
                 return 'Beitrag öffnen';
             }
         }
 
-        // Öffne Modal mit mehreren Links
-        async function openLinkModal(links) {
+        // Modal öffnen
+        async function openModal(links) {
             const modal = document.getElementById('multiLinkModal');
-            const modalLinkList = modal.querySelector('.modal-link-list');
+            const list = modal.querySelector('.modal-link-list');
             
-            modalLinkList.innerHTML = '<div class="modal-loading"><i class="fa-solid fa-spinner fa-spin"></i> Lade Seiten...</div>';
+            list.innerHTML = '<div class="modal-loading"><i class="fa-solid fa-spinner fa-spin"></i> Lade...</div>';
             modal.classList.add('active');
             
-            try {
-                const linksWithTitles = await Promise.all(
-                    links.map(async (link) => {
-                        const title = await fetchPageTitle(link);
-                        return { link, title };
-                    })
-                );
-
-                modalLinkList.innerHTML = '';
-                linksWithTitles.forEach(({ link, title }) => {
-                    const linkElement = document.createElement('a');
-                    linkElement.href = link;
-                    linkElement.target = '_blank';
-                    linkElement.rel = 'noopener noreferrer';
-                    linkElement.innerHTML = `<i class="fa-solid fa-file-lines"></i> <span>${title}</span>`;
-                    modalLinkList.appendChild(linkElement);
-                });
-            } catch (error) {
-                console.error('Fehler beim Laden der Links:', error);
-                modalLinkList.innerHTML = '<div class="modal-loading" style="color: #c0392b;"><i class="fa-solid fa-circle-exclamation"></i> Fehler beim Laden der Links</div>';
-            }
+            const items = await Promise.all(links.map(async link => ({
+                link,
+                title: await getTitle(link)
+            })));
+            
+            list.innerHTML = items.map(({link, title}) => 
+                `<a href="${link}" target="_blank" rel="noopener noreferrer">
+                    <i class="fa-solid fa-file-lines"></i> ${title}
+                </a>`
+            ).join('');
         }
 
-        // YouTube Video Details von API abrufen
-        async function getYouTubeVideoDetails(videoIds) {
-            if (!videoIds || videoIds.length === 0) return {};
-            
-            const videoIdString = videoIds.join(',');
-            const apiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoIdString}&key=${YOUTUBE_API_KEY}`;
-            
-            try {
-                const response = await fetch(apiUrl);
-                const data = await response.json();
-                
-                const details = {};
-                if (data.items) {
-                    data.items.forEach(item => {
-                        details[item.id] = {
-                            description: item.snippet.description,
-                            thumbnail: item.snippet.thumbnails.medium.url
-                        };
-                    });
-                }
-                
-                return details;
-            } catch (error) {
-                console.error('Fehler beim Abrufen der YouTube-Details:', error);
-                return {};
-            }
-        }
-
-        // YouTube RSS Feed parsen
-        function parseYouTubeRSS(xmlString) {
-            const parser = new DOMParser();
-            const xmlDoc = parser.parseFromString(xmlString, 'text/xml');
-            
-            const entries = xmlDoc.querySelectorAll('entry');
-            const items = [];
-            
-            entries.forEach(entry => {
-                const videoId = entry.querySelector('videoId')?.textContent;
-                const title = entry.querySelector('title')?.textContent;
-                const link = entry.querySelector('link')?.getAttribute('href');
-                const published = entry.querySelector('published')?.textContent;
-                
-                if (videoId && title && link && published) {
-                    items.push({
-                        videoId,
-                        title,
-                        link,
-                        pubDate: published,
-                        thumbnail: `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`
-                    });
-                }
-            });
-            
-            return items;
-        }
-
-        // Lade YouTube Feed
-        async function loadYouTubeFeed(forceRefresh = false) {
+        // YouTube laden
+        async function loadYouTube(refresh = false) {
             const panel = document.getElementById('youtube');
-            const statusMessage = panel.querySelector('.status-message');
-            const refreshButton = panel.querySelector('.refresh-button');
-            const refreshIcon = refreshButton.querySelector('i');
+            const status = panel.querySelector('.status-message');
+            const btn = panel.querySelector('.refresh-button');
+            const icon = btn.querySelector('i');
             
-            if (cachedFeeds.youtube && !forceRefresh) {
-                renderYouTubeFeed(cachedFeeds.youtube);
+            if (APP.cache.youtube && !refresh) {
+                renderYouTube(APP.cache.youtube);
                 return;
             }
             
             panel.classList.remove('loaded');
-            refreshButton.disabled = true;
-            refreshIcon.classList.add('fa-spin');
+            btn.disabled = true;
+            icon.classList.add('fa-spin');
             
             try {
-                const rssUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${YOUTUBE_CHANNEL_ID}`;
-                const corsProxy = 'https://api.allorigins.win/raw?url=';
+                // RSS laden
+                const rssUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${APP.CHANNEL_ID}`;
+                const res1 = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(rssUrl));
+                const xml = await res1.text();
                 
-                const response = await fetch(corsProxy + encodeURIComponent(rssUrl));
-                const xmlText = await response.text();
+                const doc = new DOMParser().parseFromString(xml, 'text/xml');
+                const entries = Array.from(doc.querySelectorAll('entry'));
                 
-                let items = parseYouTubeRSS(xmlText);
+                let items = entries.map(e => ({
+                    id: e.querySelector('videoId')?.textContent,
+                    title: e.querySelector('title')?.textContent,
+                    link: e.querySelector('link')?.getAttribute('href'),
+                    date: e.querySelector('published')?.textContent
+                })).filter(i => i.id && i.title);
                 
-                // Hole Details von YouTube API
-                const videoIds = items.map(item => item.videoId);
-                const videoDetails = await getYouTubeVideoDetails(videoIds);
+                // API Details laden
+                const ids = items.map(i => i.id).join(',');
+                const apiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${ids}&key=${APP.API_KEY}`;
+                const res2 = await fetch(apiUrl);
+                const data = await res2.json();
                 
-                // Merge Details
-                items = items.map(item => ({
-                    ...item,
-                    description: videoDetails[item.videoId]?.description || '',
-                    thumbnail: videoDetails[item.videoId]?.thumbnail || item.thumbnail
-                }));
-                
-                cachedFeeds.youtube = items;
-                lastUpdateTimes.youtube = new Date();
-                
-                renderYouTubeFeed(items);
-                
-                if (forceRefresh) {
-                    showFeedback('youtube', 'Aktualisiert!');
-                } else {
-                    updateLastRefreshTime('youtube');
+                const details = {};
+                if (data.items) {
+                    data.items.forEach(v => {
+                        details[v.id] = {
+                            desc: v.snippet.description,
+                            thumb: v.snippet.thumbnails.medium.url
+                        };
+                    });
                 }
                 
-            } catch (error) {
-                console.error('Fehler beim Laden des YouTube-Feeds:', error);
-                statusMessage.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Fehler beim Laden. Versuche es später erneut.';
+                items = items.map(i => ({
+                    ...i,
+                    desc: details[i.id]?.desc || '',
+                    thumb: details[i.id]?.thumb || `https://img.youtube.com/vi/${i.id}/mqdefault.jpg`
+                }));
+                
+                APP.cache.youtube = items;
+                renderYouTube(items);
+                panel.classList.add('loaded');
+                
+            } catch (err) {
+                console.error('YouTube Fehler:', err);
+                status.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Fehler beim Laden';
             } finally {
-                refreshIcon.classList.remove('fa-spin');
-                refreshButton.disabled = false;
+                icon.classList.remove('fa-spin');
+                btn.disabled = false;
             }
         }
 
-        // Render YouTube Feed
-        function renderYouTubeFeed(items) {
-            const panel = document.getElementById('youtube');
+        // YouTube rendern
+        function renderYouTube(items) {
             const list = document.getElementById('youtube-feed-list');
-            const loadMoreButton = panel.querySelector('.load-more-button');
+            const btn = document.querySelector('#youtube .load-more-button');
             
             list.innerHTML = '';
             
-            const currentLimit = displayLimits.youtube;
-            const itemsToShow = items.slice(0, currentLimit);
+            const show = items.slice(0, APP.limits.youtube);
             
-            if (itemsToShow.length === 0) {
-                panel.querySelector('.status-message').innerHTML = '<i class="fa-solid fa-info-circle"></i> Keine Videos gefunden.';
-                loadMoreButton.style.display = 'none';
+            show.forEach(item => {
+                const li = document.createElement('li');
+                li.className = 'feed-item';
+                
+                const date = new Date(item.date).toLocaleDateString('de-DE');
+                const links = extractLinks(item.desc);
+                
+                let linkBtn = '';
+                if (links.length === 1) {
+                    linkBtn = `<a href="${links[0]}" target="_blank" class="article-link-button">
+                        <i class="fa-solid fa-file-lines"></i> Beitrag dazu lesen
+                    </a>`;
+                } else if (links.length > 1) {
+                    linkBtn = `<button class="article-link-button" onclick="openModal(${JSON.stringify(links).replace(/"/g, '&quot;')})">
+                        <i class="fa-solid fa-file-lines"></i> Beitrag lesen + ${links.length - 1} weitere
+                    </button>`;
+                }
+                
+                li.innerHTML = `
+                    <img src="${item.thumb}" class="thumbnail" onclick="window.open('${item.link}', '_blank')">
+                    <div class="feed-item-content">
+                        <a href="${item.link}" target="_blank" class="title-link">${item.title}</a>
+                        <div class="feed-item-date">${date}</div>
+                        ${linkBtn}
+                    </div>
+                `;
+                
+                list.appendChild(li);
+            });
+            
+            btn.style.display = show.length < items.length ? 'block' : 'none';
+        }
+
+        // Spotify laden
+        async function loadSpotify(refresh = false) {
+            const panel = document.getElementById('spotify');
+            const status = panel.querySelector('.status-message');
+            const btn = panel.querySelector('.refresh-button');
+            const icon = btn.querySelector('i');
+            
+            if (APP.cache.spotify && !refresh) {
+                renderSpotify(APP.cache.spotify);
                 return;
             }
             
-            itemsToShow.forEach(item => {
+            panel.classList.remove('loaded');
+            btn.disabled = true;
+            icon.classList.add('fa-spin');
+            
+            try {
+                const rssUrl = 'https://anchor.fm/s/105dbc5d0/podcast/rss';
+                const apiUrl = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(rssUrl);
+                
+                const res = await fetch(apiUrl);
+                const data = await res.json();
+                
+                if (data.status === 'ok') {
+                    APP.cache.spotify = data.items;
+                    renderSpotify(data.items);
+                    panel.classList.add('loaded');
+                } else {
+                    throw new Error('RSS Fehler');
+                }
+                
+            } catch (err) {
+                console.error('Spotify Fehler:', err);
+                status.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Fehler beim Laden';
+            } finally {
+                icon.classList.remove('fa-spin');
+                btn.disabled = false;
+            }
+        }
+
+        // Spotify rendern
+        function renderSpotify(items) {
+            const list = document.getElementById('spotify-feed-list');
+            const btn = document.querySelector('#spotify .load-more-button');
+            
+            list.innerHTML = '';
+            
+            const show = items.slice(0, APP.limits.spotify);
+            
+            show.forEach(item => {
                 const li = document.createElement('li');
-                li.className = 'feed-item youtube';
+                li.className = 'feed-item spotify';
                 
-                const pubDate = new Date(item.pubDate);
-                const dateStr = pubDate.toLocaleDateString('de-DE', { 
-                    day: '2-digit', 
-                    month: '2-digit', 
-                    year: 'numeric' 
+                const date = new Date(item.pubDate).toLocaleDateString('de-DE');
+                
+                li.innerHTML = `
+                    <img src="${item.thumbnail || item.enclosure?.link || ''}" class="thumbnail" onclick="window.open('${item.link}', '_blank')">
+                    <div class="feed-item-content">
+                        <a href="${item.link}" target="_blank" class="title-link">${item.title}</a>
+                        <div class="feed-item-date">${date}</div>
+                    </div>
+                `;
+                
+                list.appendChild(li);
+            });
+            
+            btn.style.display = show.length < items.length ? 'block' : 'none';
+        }
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            // Tabs
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const tab = btn.dataset.tab;
+                    
+                    document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+                    
+                    btn.classList.add('active');
+                    document.getElementById(tab).classList.add('active');
+                    
+                    if (tab === 'youtube') loadYouTube();
+                    if (tab === 'spotify') loadSpotify();
                 });
-                
-                // Extrahiere Anton-Hansen-Schule Links
-                const ahsLinks = extractAntonHansenLinks(item.description);
-                
-                let linkButtonHTML = '';
-                if (ahsLinks.length === 1) {
-                    linkButtonHTML = `<a href="${ahsLinks[0]}" target="_blank" rel="noopener noreferrer" class="article-link-button">
-                        <i class="fa-solid fa-file-lines"></i> Beitrag dazu lesen
-                    </a>`;
-                } else if (ahsLinks.length > 1) {
-                    linkButtonHTML = `<button class="article-link
+            });
+            
+            // Refresh
+            document.querySelectorAll('.refresh-button').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const tab = btn.dataset.tab;
+                    APP.limits[tab] = APP.ITEMS_PER_LOAD;
+                    if (tab === 'youtube') loadYouTube(true);
+                    if (tab === 'spotify') loadSpotify(true);
+                });
+            });
+            
+            // Load More
+            document.querySelectorAll('.load-more-button').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const tab = btn.dataset.tab;
