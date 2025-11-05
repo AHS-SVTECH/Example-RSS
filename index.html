@@ -169,7 +169,7 @@
             margin-right: auto; 
             font-size: 0.9rem;
             font-weight: 600;
-            color: #1DB954;
+            color: #777;
             opacity: 0;
             transition: opacity 0.5s ease;
             white-space: nowrap;
@@ -604,6 +604,7 @@
 
     <script type="module">
         const ITEMS_PER_LOAD = 3;
+        const YOUTUBE_API_KEY = 'AIzaSyCyQLP8Tk1u7-VWgGRfleZ6_ojcjkIDre4';
 
         const rssFeeds = {
             youtube: 'https://www.youtube.com/feeds/videos.xml?channel_id=UC9GtyN6irUK93FwmYsnTHkw',
@@ -625,9 +626,6 @@
             spotify: null
         };
         
-        // Regex findet alle Links mit anton-hansen-schule.de (inkl. Subdomains)
-        const ahsLinkRegex = /https?:\/\/(?:[a-zA-Z0-9-]+\.)?anton-hansen-schule\.de[^\s"<>)\]']*/gi;
-        
         document.addEventListener('DOMContentLoaded', () => {
             
             const tabButtons = document.querySelectorAll('.tab-button');
@@ -643,6 +641,7 @@
                 let feedback = header.querySelector('.refresh-feedback');
                 
                 feedback.textContent = message;
+                feedback.style.color = '#1DB954';
                 feedback.style.opacity = 1;
                 
                 setTimeout(() => {
@@ -687,7 +686,6 @@
                 }
             }
             
-            // Extrahiert den Seitentitel aus HTML
             function extractTitle(html) {
                 const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
                 if (titleMatch && titleMatch[1]) {
@@ -703,12 +701,6 @@
             }
             
             async function openMultiLinkModal(links, button) {
-                button.classList.add('loading');
-                button.disabled = true;
-                const icon = button.querySelector('i');
-                const originalIconClass = icon.className;
-                icon.className = 'fa-solid fa-spinner fa-spin';
-
                 modalLinkList.innerHTML = ''; 
 
                 try {
@@ -727,7 +719,6 @@
                         } catch (e) {
                             console.warn(`Konnte Titel für ${link} nicht abrufen:`, e);
                             
-                            // Fallback: Nutze den letzten Teil der URL als Titel
                             try {
                                 const urlObj = new URL(link);
                                 const pathParts = urlObj.pathname.split('/').filter(p => p);
@@ -755,10 +746,8 @@
                     });
 
                     modal.classList.add('active');
-                } finally {
-                    button.classList.remove('loading');
-                    button.disabled = false;
-                    icon.className = originalIconClass;
+                } catch (error) {
+                    console.error('Fehler beim Modal:', error);
                 }
             }
 
@@ -806,7 +795,7 @@
                     
                     cachedFeeds[tabId] = data;
                     lastUpdateTimes[tabId] = new Date();
-                    renderFeed(tabId, data);
+                    await renderFeed(tabId, data);
                     
                     if (forceRefresh) {
                         showTemporaryFeedback(tabId, 'Aktualisiert!');
@@ -846,190 +835,5 @@
                      panel.querySelector('.status-message').innerHTML = `<i class="fa-solid fa-info-circle"></i> Keine Einträge gefunden.`;
                      loadMoreButton.style.display = 'none';
                 } else {
-                    // Für YouTube: Erst alle Links laden, dann rendern
                     if (tabId === 'youtube') {
-                        const itemsWithLinks = await Promise.all(
-                            itemsToShow.map(async item => {
-                                const urlMatch = item.link.match(/[?&]v=([^&]+)/);
-                                if (urlMatch) {
-                                    const videoId = urlMatch[1];
-                                    const links = await fetchLinksFromYouTubeAPI(videoId);
-                                    return { ...item, ahsLinks: links };
-                                }
-                                return { ...item, ahsLinks: [] };
-                            })
-                        );
-                        
-                        itemsWithLinks.forEach(item => {
-                            const listItem = createFeedItem(item, tabId);
-                            list.appendChild(listItem);
-                        });
-                    } else {
-                        itemsToShow.forEach(item => {
-                            const listItem = createFeedItem(item, tabId);
-                            list.appendChild(listItem);
-                        });
-                    }
-
-                    if (currentLimit < totalItems) {
-                        loadMoreButton.style.display = 'block';
-                    } else {
-                        loadMoreButton.style.display = 'none';
-                    }
-                }
-                
-                panel.classList.add('loaded');
-            }
-
-            function createFeedItem(item, type) {
-                const li = document.createElement('li');
-                li.className = `feed-item ${type}`;
-
-                const pubDate = new Date(item.pubDate).toLocaleDateString('de-DE', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric'
-                });
-
-                const thumbnailUrl = item.thumbnail || (item.enclosure && item.enclosure.link);
-                
-                // Suche in description UND content nach Links
-                const descriptionText = item.description || '';
-                const contentText = item.content || '';
-                const combinedText = descriptionText + ' ' + contentText;
-                
-                // DEBUG: Zeige die komplette Beschreibung
-                console.log(`\n========== DEBUG: ${item.title} ==========`);
-                console.log('📝 Description Feld:', item.description ? `Ja (${item.description.length} Zeichen)` : 'LEER');
-                console.log('📝 Content Feld:', item.content ? `Ja (${item.content.length} Zeichen)` : 'LEER');
-                console.log('📝 Kombinierte Länge:', combinedText.length);
-                
-                if (combinedText.length > 0) {
-                    console.log('📄 Erste 1000 Zeichen der Beschreibung:');
-                    console.log(combinedText.substring(0, 1000));
-                    console.log('...');
-                }
-                
-                // Test: Suche nach ALLEN URLs (nicht nur anton-hansen-schule.de)
-                const allUrls = combinedText.match(/https?:\/\/[^\s"<>)\]']+/gi);
-                console.log('🔗 ALLE gefundenen URLs:', allUrls ? allUrls.length : 0);
-                if (allUrls) {
-                    allUrls.forEach(url => console.log('  - ' + url));
-                }
-                
-                // Finde alle anton-hansen-schule.de Links
-                const ahsLinksSet = new Set();
-                
-                // Erstelle eine neue Regex-Instanz für jeden Durchlauf
-                const linkMatches = combinedText.match(/https?:\/\/(?:[a-zA-Z0-9-]+\.)?anton-hansen-schule\.de[^\s"<>)\]']*/gi);
-                
-                console.log('🎯 Anton-Hansen-Schule Links gefunden:', linkMatches ? linkMatches.length : 0);
-                if (linkMatches) {
-                    linkMatches.forEach(link => console.log('  ✓ ' + link));
-                }
-                
-                if (linkMatches) {
-                    linkMatches.forEach(link => {
-                        // Bereinige den Link von HTML-Entities und Trailing-Zeichen
-                        let cleanLink = link
-                            .replace(/&amp;/g, '&')
-                            .replace(/&quot;/g, '')
-                            .replace(/&#39;/g, '')
-                            .replace(/&lt;/g, '<')
-                            .replace(/&gt;/g, '>')
-                            .replace(/[,;.!?]+$/, '') // Entferne Satzzeichen am Ende
-                            .trim();
-                        
-                        // Entferne möglicherweise angehängte HTML-Tags
-                        cleanLink = cleanLink.split('<')[0];
-                        
-                        console.log('  ➜ Bereinigt:', cleanLink);
-                        
-                        // Ignoriere Test-Domains
-                        if (!cleanLink.includes('test123.de') && !cleanLink.includes('1234.de')) {
-                            ahsLinksSet.add(cleanLink);
-                        }
-                    });
-                }
-                
-                const ahsLinks = Array.from(ahsLinksSet);
-                
-                console.log(`✅ Finale verwendete Links: ${ahsLinks.length}`);
-                ahsLinks.forEach(link => console.log('  🔗 ' + link));
-                console.log('==========================================\n');
-                
-                li.innerHTML = `
-                    <a href="${item.link}" target="_blank" rel="noopener noreferrer">
-                        <img src="${thumbnailUrl}" alt="Thumbnail" class="thumbnail" onerror="this.src='https://placehold.co/100x56/cccccc/333333?text=${type.toUpperCase()}'">
-                    </a>
-                    
-                    <div class="feed-item-content">
-                        <a href="${item.link}" class="title-link" target="_blank" rel="noopener noreferrer" title="${item.title}">
-                            ${item.title}
-                        </a>
-                        
-                        <span class="feed-item-date">${pubDate}</span>
-                        
-                        ${ahsLinks.length > 0 ? `
-                            <button class="article-link-button" data-links='${JSON.stringify(ahsLinks)}' title="Beitrag dazu lesen">
-                                ${ahsLinks.length === 1 ? 'Beitrag dazu lesen' : ahsLinks.length + ' Beiträge verfügbar'} <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                            </button>
-                        ` : ''}
-                    </div>
-                `;
-                
-                const articleLinkButton = li.querySelector('.article-link-button');
-                if (articleLinkButton) {
-                    articleLinkButton.addEventListener('click', (event) => {
-                        event.preventDefault(); 
-                        
-                        const links = JSON.parse(articleLinkButton.dataset.links);
-                        
-                        if (links.length === 1) {
-                            window.open(links[0], '_blank');
-                        } else {
-                            openMultiLinkModal(links, articleLinkButton);
-                        }
-                    });
-                }
-                
-                return li;
-            }
-
-            tabButtons.forEach(button => {
-                button.addEventListener('click', (event) => {
-                    activateTab(event.currentTarget.dataset.tab);
-                });
-            });
-            
-            refreshButtons.forEach(button => {
-                button.addEventListener('click', (event) => {
-                    const tabId = event.currentTarget.dataset.tab;
-                    displayLimits[tabId] = ITEMS_PER_LOAD; 
-                    loadFeed(tabId, true); 
-                });
-            });
-
-            loadMoreButtons.forEach(button => {
-                button.addEventListener('click', (event) => {
-                    loadMoreItems(event.currentTarget.dataset.tab);
-                });
-            });
-            
-            closeButton.addEventListener('click', () => {
-                modal.classList.remove('active');
-            });
-            window.addEventListener('click', (event) => {
-                if (event.target == modal) {
-                    modal.classList.remove('active');
-                }
-            });
-
-            loadFeed('youtube');
-            loadFeed('spotify');
-            activateTab('youtube');
-        });
-    </script>
-
-</body>
-</html>
+                        console.log('🎥 Lade YouTube-Links für', itemsToShow.length,
