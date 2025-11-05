@@ -4,65 +4,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Neue Inhalte der Anton-Hansen-Schule</title>
-
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-
     <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            font-family: 'Inter', system-ui, sans-serif;
-            background-color: #f0f4f8;
-        }
-
+        * { box-sizing: border-box; }
+        body, html { margin: 0; padding: 0; font-family: 'Inter', sans-serif; background: #f0f4f8; }
+        
         .menu-container {
-            background-color: #002a5c;
-            padding: 40px 20px 60px 20px;
+            background: #002a5c;
+            padding: 40px 20px 60px;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            box-sizing: border-box;
         }
-
-        .menu-container h2 {
-            color: #ffffff;
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 30px;
-            text-align: center;
-        }
-
+        
+        .menu-container h2 { color: #fff; font-size: 2rem; margin-bottom: 30px; }
+        
         .fabi-leon-promo {
-            background-color: #f3f4f6;
+            background: #f3f4f6;
             border-radius: 12px;
             padding: 20px;
             margin-bottom: 30px;
             max-width: 700px;
             width: 100%;
             text-align: center;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
-
-        .fabi-leon-promo h3 {
-            font-size: 1.25rem;
-            color: #002a5c;
-            margin-top: 0;
-            margin-bottom: 10px;
-        }
-
-        .fabi-leon-links {
-            display: flex;
-            flex-wrap: wrap; 
-            justify-content: center;
-            gap: 10px;
-            margin-top: 15px;
-        }
-
+        
+        .fabi-leon-promo h3 { font-size: 1.25rem; color: #002a5c; margin: 0 0 10px; }
+        .fabi-leon-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 15px; }
         .fabi-leon-links a {
             display: inline-flex;
             align-items: center;
@@ -72,178 +43,49 @@
             text-decoration: none;
             font-size: 0.9rem;
             font-weight: 600;
-            transition: background-color 0.2s ease;
+            transition: 0.2s;
         }
-
-        .fabi-leon-links a.web {
-            background-color: #ffffff;
-            color: #002a5c;
-            border: 1px solid #002a5c;
-        }
-        .fabi-leon-links a.web:hover {
-            background-color: #e0e7ff;
-        }
-        .fabi-leon-links a.yt {
-            background-color: #ff0000;
-            color: #ffffff;
-        }
-        .fabi-leon-links a.yt:hover {
-            background-color: #cc0000;
-        }
-        .fabi-leon-links a.insta {
-            background-color: #E1306C;
-            color: #ffffff;
-        }
-        .fabi-leon-links a.insta:hover {
-            background-color: #a80a42;
-        }
-        .fabi-leon-links a.linktree {
-            background-color: #607d8b; 
-            color: #ffffff;
-        }
-        .fabi-leon-links a.linktree:hover {
-            background-color: #455a64;
-        }
-
-        .tab-navigation {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-
+        .fabi-leon-links a.web { background: #fff; color: #002a5c; border: 1px solid #002a5c; }
+        .fabi-leon-links a.web:hover { background: #e0e7ff; }
+        .fabi-leon-links a.yt { background: #ff0000; color: #fff; }
+        .fabi-leon-links a.yt:hover { background: #cc0000; }
+        .fabi-leon-links a.insta { background: #E1306C; color: #fff; }
+        .fabi-leon-links a.insta:hover { background: #a80a42; }
+        .fabi-leon-links a.linktree { background: #607d8b; color: #fff; }
+        .fabi-leon-links a.linktree:hover { background: #455a64; }
+        
+        .tab-navigation { display: flex; gap: 15px; margin-bottom: 30px; }
         .tab-button {
             font-family: 'Inter', sans-serif;
             font-size: 1rem;
             font-weight: 600;
             padding: 12px 25px;
             border-radius: 50px;
-            border: 2px solid rgba(255, 255, 255, 0.5);
-            background-color: transparent;
-            color: rgba(255, 255, 255, 0.8);
+            border: 2px solid rgba(255,255,255,0.5);
+            background: transparent;
+            color: rgba(255,255,255,0.8);
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: 0.3s;
         }
-
-        .tab-button:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-            color: #ffffff;
-        }
-
-        .tab-button.active {
-            background-color: #ffffff;
-            color: #002a5c;
-            border-color: #ffffff;
-        }
-
-        .tab-content-wrapper {
-            width: 100%;
-            max-width: 700px;
-        }
-
+        .tab-button:hover { background: rgba(255,255,255,0.1); color: #fff; }
+        .tab-button.active { background: #fff; color: #002a5c; border-color: #fff; }
+        
+        .tab-content-wrapper { width: 100%; max-width: 700px; }
         .tab-panel {
             display: none;
-            background-color: #ffffff;
+            background: #fff;
             border-radius: 16px;
             padding: 30px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            position: relative; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            position: relative;
             min-height: 250px;
         }
-
-        .tab-panel.active {
-            display: block;
-        }
-
-        .panel-header {
-            display: flex;
-            justify-content: flex-end; 
-            align-items: center;
-            margin-bottom: 20px;
-            position: relative;
-            flex-wrap: wrap; 
-            gap: 10px;
-        }
+        .tab-panel.active { display: block; }
         
-        .refresh-feedback {
-            margin-right: auto; 
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: #777;
-            opacity: 0;
-            transition: opacity 0.5s ease;
-            white-space: nowrap;
-        }
-        
-        .panel-footer {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-            text-align: center;
-        }
-
-        .channel-link {
-            padding: 12px 30px; 
-            border-radius: 50px; 
-            font-weight: 600;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.3s ease;
-            font-size: 1rem;
-            flex-shrink: 0;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .channel-link.spotify {
-            background-color: #1DB954; 
-            color: #ffffff;
-        }
-        .channel-link.spotify:hover {
-            background-color: #17893d;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-        }
-        .channel-link.youtube {
-            background-color: #ff0000; 
-            color: #ffffff;
-        }
-        .channel-link.youtube:hover {
-            background-color: #cc0000;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        .status-message {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(255, 255, 255, 0.95);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10;
-            color: #333;
-            font-size: 1.1rem;
-            border-radius: 16px;
-            transition: opacity 0.3s ease;
-        }
-        
-        .tab-panel.loaded .status-message {
-            opacity: 0;
-            pointer-events: none;
-        }
-        
-        .status-message i {
-            margin-right: 10px;
-        }
-
+        .panel-header { display: flex; justify-content: flex-end; margin-bottom: 20px; gap: 10px; }
         .refresh-button {
-            background-color: #95a5a6; 
-            color: #ffffff;
+            background: #95a5a6;
+            color: #fff;
             border: none;
             padding: 8px 15px;
             border-radius: 20px;
@@ -253,263 +95,160 @@
             display: inline-flex;
             align-items: center;
             gap: 5px;
-            transition: all 0.1s ease;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            flex-shrink: 0;
         }
+        .refresh-button:hover { background: #7f8c8d; }
+        .refresh-button:disabled { opacity: 0.6; cursor: not-allowed; }
         
-        .refresh-button:hover {
-            background-color: #7f8c8d;
+        .status-message {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            color: #333;
+            font-size: 1.1rem;
+            border-radius: 16px;
         }
-
-        .refresh-button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .feed-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            min-height: 100px; 
-        }
-
+        .tab-panel.loaded .status-message { opacity: 0; pointer-events: none; }
+        
+        .feed-list { list-style: none; padding: 0; margin: 0; }
         .feed-item {
             display: flex;
-            align-items: flex-start;
             gap: 15px;
             padding: 15px 0;
             border-bottom: 1px solid #eee;
         }
-        
-        .feed-item:last-child {
-            border-bottom: none;
-        }
-        
-        .feed-item img.thumbnail {
+        .feed-item:last-child { border-bottom: none; }
+        .feed-item img {
             width: 120px;
             height: 68px;
             object-fit: cover;
             border-radius: 8px;
-            background-color: #eee;
-            flex-shrink: 0;
             cursor: pointer;
-            transition: transform 0.2s ease;
+            transition: 0.2s;
         }
+        .feed-item img:hover { transform: scale(1.05); }
+        .feed-item.spotify img { width: 80px; height: 80px; }
         
-        .feed-item img.thumbnail:hover {
-            transform: scale(1.05);
-        }
-
-        .feed-item.spotify img.thumbnail {
-            width: 80px;
-            height: 80px;
-        }
-
-        .feed-item-content {
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            flex-grow: 1;
-        }
-        
-        .feed-item-content a.title-link {
+        .feed-item-content { flex: 1; }
+        .title-link {
             font-size: 1rem;
             font-weight: 600;
             color: #333;
             text-decoration: none;
-            line-height: 1.4;
-            transition: color 0.2s ease;
-            white-space: normal; 
+            display: block;
             margin-bottom: 5px;
         }
-
-        .feed-item-content a.title-link:hover {
-            color: #002a5c;
-        }
-
-        .feed-item-date {
-            font-size: 0.85rem;
-            color: #777;
-            margin-bottom: 8px;
-        }
-
+        .title-link:hover { color: #002a5c; }
+        .feed-item-date { font-size: 0.85rem; color: #777; margin-bottom: 8px; }
+        
         .article-link-button {
-            background-color: #0056b3; 
-            color: #ffffff;
+            background: #0056b3;
+            color: #fff;
             border: none;
             padding: 8px 16px;
-            border-radius: 20px; 
+            border-radius: 20px;
             font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+        }
+        .article-link-button:hover { background: #004085; transform: translateY(-1px); }
+        
+        .load-more-button {
+            width: 100%;
+            background: #002a5c;
+            color: #fff;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            margin-top: 20px;
+            cursor: pointer;
+        }
+        .load-more-button:hover { background: #003d7c; }
+        
+        .panel-footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            text-align: center;
+        }
+        .channel-link {
+            padding: 12px 30px;
+            border-radius: 50px;
             font-weight: 600;
             text-decoration: none;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
-            cursor: pointer;
-            margin-top: 5px;
-            align-self: flex-start;
+            gap: 8px;
+            transition: 0.3s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
+        .channel-link.youtube { background: #ff0000; color: #fff; }
+        .channel-link.youtube:hover { background: #cc0000; transform: translateY(-2px); }
+        .channel-link.spotify { background: #1DB954; color: #fff; }
+        .channel-link.spotify:hover { background: #17893d; transform: translateY(-2px); }
         
-        .article-link-button:hover {
-            background-color: #004085;
-            transform: translateY(-1px);
-            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        .load-more-button {
-            display: block;
-            width: 100%;
-            background-color: #002a5c;
-            color: #ffffff;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 1rem;
-            margin-top: 20px;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
-
-        .load-more-button:hover {
-            background-color: #003d7c;
-        }
-
         .modal {
-            display: none; 
-            position: fixed; 
-            z-index: 100; 
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto; 
-            background-color: rgba(0,0,0,0.6); 
-            backdrop-filter: blur(5px); 
-            -webkit-backdrop-filter: blur(5px);
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
             justify-content: center;
             align-items: center;
             opacity: 0;
-            transition: opacity 0.3s ease;
+            transition: 0.3s;
         }
-
-        .modal.active {
-            display: flex;
-            opacity: 1;
-        }
-
+        .modal.active { display: flex; opacity: 1; }
         .modal-content {
-            background-color: #fefefe;
-            margin: auto;
+            background: #fff;
             padding: 30px;
             border-radius: 12px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.25);
             width: 90%;
             max-width: 500px;
-            position: relative;
-            transform: translateY(20px);
-            opacity: 0;
-            transition: transform 0.3s ease, opacity 0.3s ease;
             max-height: 80vh;
             overflow-y: auto;
+            position: relative;
         }
-
-        .modal.active .modal-content {
-            transform: translateY(0);
-            opacity: 1;
-        }
-
         .close-button {
-            color: #aaa;
             position: absolute;
-            top: 10px;
-            right: 15px;
+            top: 10px; right: 15px;
             font-size: 28px;
-            font-weight: bold;
             cursor: pointer;
-            transition: color 0.2s ease;
             background: none;
             border: none;
-            padding: 0;
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            color: #aaa;
         }
-
-        .close-button:hover {
-            color: #333;
-        }
-
-        .modal-content h3 {
-            color: #002a5c;
-            margin-top: 0;
-            margin-bottom: 20px;
-            font-size: 1.4rem;
-            padding-right: 30px;
-        }
-
-        .modal-link-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
+        .close-button:hover { color: #333; }
+        .modal-content h3 { color: #002a5c; margin-top: 0; padding-right: 30px; }
+        .modal-link-list { display: flex; flex-direction: column; gap: 10px; }
         .modal-link-list a {
-            background-color: #e0f2f7; 
+            background: #e0f2f7;
             color: #002a5c;
             padding: 12px 15px;
             border-radius: 8px;
             text-decoration: none;
-            font-weight: 500;
             display: flex;
             align-items: center;
             gap: 8px;
-            transition: background-color 0.2s ease, transform 0.1s ease;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            font-size: 0.95rem;
-            line-height: 1.4;
         }
+        .modal-link-list a:hover { background: #cce9f4; }
+        .modal-loading { text-align: center; padding: 20px; color: #777; }
         
-        .modal-link-list a:hover {
-            background-color: #cce9f4;
-            transform: translateY(-1px);
-        }
-
-        .modal-loading {
-            text-align: center;
-            color: #777;
-            padding: 20px;
-        }
-
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        .fa-spin {
-            animation: spin 1s linear infinite;
-        }
-
-        @media (max-width: 768px) {
-            .feed-item {
-                flex-direction: column;
-            }
-            .feed-item img.thumbnail {
-                width: 100%;
-                height: auto;
-            }
-        }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .fa-spin { animation: spin 1s linear infinite; }
     </style>
 </head>
 <body>
-
     <div class="menu-container">
-        
         <h2>Neue Inhalte</h2>
 
         <div class="tab-navigation">
@@ -523,69 +262,55 @@
         
         <div class="fabi-leon-promo">
             <h3>Produziert von Fabi & Leon</h3>
-            <p style="font-size: 0.9rem; color: #555;">Das Management hinter YouTube und Spotify.</p>
+            <p style="font-size:0.9rem;color:#555;margin:0;">Das Management hinter YouTube und Spotify.</p>
             <div class="fabi-leon-links">
-                <a href="https://www.fabiundleon.de" class="web" target="_blank" rel="noopener noreferrer">
+                <a href="https://www.fabiundleon.de" class="web" target="_blank">
                     <i class="fa-solid fa-earth-europe"></i> Webseite
                 </a>
-                <a href="https://youtube.com/@FabiUndLeon?sub_confirmation=1" class="yt" target="_blank" rel="noopener noreferrer">
+                <a href="https://youtube.com/@FabiUndLeon?sub_confirmation=1" class="yt" target="_blank">
                     <i class="fa-brands fa-youtube"></i> YouTube
                 </a>
-                <a href="https://instagram.com/fabiundleon" class="insta" target="_blank" rel="noopener noreferrer">
+                <a href="https://instagram.com/fabiundleon" class="insta" target="_blank">
                     <i class="fa-brands fa-instagram"></i> Instagram
                 </a>
-                <a href="https://wonderl.ink/@FabiUndLeon" class="linktree" target="_blank" rel="noopener noreferrer">
+                <a href="https://wonderl.ink/@FabiUndLeon" class="linktree" target="_blank">
                     <i class="fa-solid fa-link"></i> Alle Links
                 </a>
             </div>
         </div>
 
         <div class="tab-content-wrapper">
-
             <div class="tab-panel active" id="youtube">
-                <div class="status-message">
-                    <i class="fa-solid fa-spinner fa-spin"></i> Lade neueste Videos...
-                </div>
+                <div class="status-message"><i class="fa-solid fa-spinner fa-spin"></i> Lade Videos...</div>
                 <div class="panel-header">
-                    <span class="refresh-feedback"></span>
                     <button class="refresh-button" data-tab="youtube">
                         <i class="fa-solid fa-arrows-rotate"></i> Aktualisieren
                     </button>
                 </div>
                 <ul class="feed-list" id="youtube-feed-list"></ul>
-                <button class="load-more-button" data-tab="youtube" style="display:none;">
-                    Ältere anzeigen
-                </button>
-                
+                <button class="load-more-button" data-tab="youtube" style="display:none;">Ältere anzeigen</button>
                 <div class="panel-footer">
-                    <a href="https://youtube.com/@AHS-OTW?sub_confirmation=1" class="channel-link youtube" target="_blank" rel="noopener noreferrer">
+                    <a href="https://youtube.com/@AHS-OTW?sub_confirmation=1" class="channel-link youtube" target="_blank">
                         <i class="fa-brands fa-youtube"></i> Zum YouTube-Kanal
                     </a>
                 </div>
             </div>
 
             <div class="tab-panel" id="spotify">
-                 <div class="status-message">
-                    <i class="fa-solid fa-spinner fa-spin"></i> Lade neueste Folgen...
-                </div>
+                <div class="status-message"><i class="fa-solid fa-spinner fa-spin"></i> Lade Folgen...</div>
                 <div class="panel-header">
-                    <span class="refresh-feedback"></span>
                     <button class="refresh-button" data-tab="spotify">
                         <i class="fa-solid fa-arrows-rotate"></i> Aktualisieren
                     </button>
                 </div>
                 <ul class="feed-list" id="spotify-feed-list"></ul>
-                <button class="load-more-button" data-tab="spotify" style="display:none;">
-                    Ältere anzeigen
-                </button>
-                
+                <button class="load-more-button" data-tab="spotify" style="display:none;">Ältere anzeigen</button>
                 <div class="panel-footer">
-                    <a href="https://open.spotify.com/show/1gg6Ky5FUDwSekAQ9IdEdv" class="channel-link spotify" target="_blank" rel="noopener noreferrer">
+                    <a href="https://open.spotify.com/show/1gg6Ky5FUDwSekAQ9IdEdv" class="channel-link spotify" target="_blank">
                         <i class="fa-brands fa-spotify"></i> Zum Spotify-Podcast
                     </a>
                 </div>
             </div>
-
         </div>
     </div>
 
@@ -598,67 +323,52 @@
     </div>
 
     <script>
+        const API_KEY = 'AIzaSyCyQLP8Tk1u7-VWgGRfleZ6_ojcjkIDre4';
+        const CHANNEL_ID = 'UC9GtyN6irUK93FwmYsnTHkw';
         const ITEMS_PER_LOAD = 5;
-        const YOUTUBE_API_KEY = 'AIzaSyCyQLP8Tk1u7-VWgGRfleZ6_ojcjkIDre4';
-        const YOUTUBE_CHANNEL_ID = 'UC9GtyN6irUK93FwmYsnTHkw';
+        
+        let cache = {};
+        let limits = { youtube: ITEMS_PER_LOAD, spotify: ITEMS_PER_LOAD };
 
-        let cachedFeeds = {};
-        let displayLimits = { youtube: ITEMS_PER_LOAD, spotify: ITEMS_PER_LOAD };
-
-        // Extrahiere Anton-Hansen-Schule Links
+        // Links extrahieren
         function extractLinks(text) {
             if (!text) return [];
-            const regex = /https?:\/\/(www\.)?anton-hansen-schule\.de[^\s<>")]+/gi;
-            return [...new Set(text.match(regex) || [])];
+            const matches = text.match(/https?:\/\/(www\.)?anton-hansen-schule\.de[^\s<>")]+/gi) || [];
+            return [...new Set(matches)];
         }
 
-        // Hole Seitentitel
-        async function getPageTitle(url) {
+        // Seitentitel abrufen
+        async function getTitle(url) {
             try {
-                const response = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(url));
-                const data = await response.json();
-                const doc = new DOMParser().parseFromString(data.contents, 'text/html');
+                const r = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(url));
+                const d = await r.json();
+                const doc = new DOMParser().parseFromString(d.contents, 'text/html');
                 return doc.querySelector('title')?.textContent?.trim() || 'Beitrag öffnen';
-            } catch {
-                return 'Beitrag öffnen';
-            }
+            } catch { return 'Beitrag öffnen'; }
         }
 
         // Modal öffnen
-        async function openModal(links) {
+        window.openModal = async function(links) {
             const modal = document.getElementById('multiLinkModal');
             const list = modal.querySelector('.modal-link-list');
             
-            list.innerHTML = '<div class="modal-loading"><i class="fa-solid fa-spinner fa-spin"></i> Lade Seiten...</div>';
+            list.innerHTML = '<div class="modal-loading"><i class="fa-solid fa-spinner fa-spin"></i> Lade...</div>';
             modal.classList.add('active');
             
-            try {
-                const linksWithTitles = await Promise.all(
-                    links.map(async link => ({
-                        link,
-                        title: await getPageTitle(link)
-                    }))
-                );
-                
-                list.innerHTML = linksWithTitles.map(({link, title}) => 
-                    `<a href="${link}" target="_blank" rel="noopener noreferrer">
-                        <i class="fa-solid fa-file-lines"></i> ${title}
-                    </a>`
-                ).join('');
-            } catch {
-                list.innerHTML = '<div class="modal-loading" style="color: #c0392b;">Fehler beim Laden</div>';
-            }
-        }
+            const items = await Promise.all(links.map(async l => ({ link: l, title: await getTitle(l) })));
+            list.innerHTML = items.map(({link, title}) => 
+                `<a href="${link}" target="_blank"><i class="fa-solid fa-file-lines"></i> ${title}</a>`
+            ).join('');
+        };
 
-        // YouTube Feed laden
+        // YouTube laden
         async function loadYouTube(refresh = false) {
             const panel = document.getElementById('youtube');
-            const status = panel.querySelector('.status-message');
             const btn = panel.querySelector('.refresh-button');
             const icon = btn.querySelector('i');
             
-            if (cachedFeeds.youtube && !refresh) {
-                renderYouTube(cachedFeeds.youtube);
+            if (cache.youtube && !refresh) {
+                renderYouTube(cache.youtube);
                 return;
             }
             
@@ -667,61 +377,68 @@
             icon.classList.add('fa-spin');
             
             try {
-                // 1. Lade RSS Feed für Video-Liste
-                const rssUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${YOUTUBE_CHANNEL_ID}`;
-                const rssResponse = await fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(rssUrl));
-                const rssData = await rssResponse.json();
+                // RSS laden
+                const rssUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${CHANNEL_ID}`;
+                const r1 = await fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(rssUrl));
+                const rssData = await r1.json();
                 
-                if (rssData.status !== 'ok') throw new Error('RSS Fehler');
+                console.log('YouTube RSS:', rssData);
                 
-                // 2. Lade Video-Beschreibungen via YouTube API
+                if (rssData.status !== 'ok') throw new Error('RSS failed');
+                
+                // Video IDs extrahieren
                 const videoIds = rssData.items.map(item => {
                     const match = item.link.match(/v=([^&]+)/);
                     return match ? match[1] : null;
                 }).filter(Boolean);
                 
-                const apiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoIds.join(',')}&key=${YOUTUBE_API_KEY}`;
-                const apiResponse = await fetch(apiUrl);
-                const apiData = await apiResponse.json();
+                console.log('Video IDs:', videoIds);
                 
-                // 3. Merge Daten
-                const descriptions = {};
+                // API Details laden
+                const apiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoIds.join(',')}&key=${API_KEY}`;
+                const r2 = await fetch(apiUrl);
+                const apiData = await r2.json();
+                
+                console.log('YouTube API:', apiData);
+                
+                // Descriptions zusammenführen
+                const descs = {};
                 if (apiData.items) {
-                    apiData.items.forEach(video => {
-                        descriptions[video.id] = video.snippet.description;
-                    });
+                    apiData.items.forEach(v => { descs[v.id] = v.snippet.description; });
                 }
                 
+                // Daten mergen
                 const items = rssData.items.map(item => {
                     const videoId = item.link.match(/v=([^&]+)/)?.[1];
                     return {
                         ...item,
                         videoId,
-                        description: descriptions[videoId] || ''
+                        description: descs[videoId] || ''
                     };
                 });
                 
-                cachedFeeds.youtube = items;
+                console.log('Final items:', items);
+                
+                cache.youtube = items;
                 renderYouTube(items);
                 panel.classList.add('loaded');
                 
             } catch (err) {
-                console.error('YouTube Fehler:', err);
-                status.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Fehler beim Laden';
+                console.error('YouTube Error:', err);
+                panel.querySelector('.status-message').innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Fehler beim Laden';
             } finally {
                 icon.classList.remove('fa-spin');
                 btn.disabled = false;
             }
         }
 
-        // YouTube Feed rendern
+        // YouTube rendern
         function renderYouTube(items) {
             const list = document.getElementById('youtube-feed-list');
             const btn = document.querySelector('#youtube .load-more-button');
             
             list.innerHTML = '';
-            
-            const show = items.slice(0, displayLimits.youtube);
+            const show = items.slice(0, limits.youtube);
             
             show.forEach(item => {
                 const li = document.createElement('li');
@@ -736,35 +453,34 @@
                         <i class="fa-solid fa-file-lines"></i> Beitrag dazu lesen
                     </a>`;
                 } else if (links.length > 1) {
-                    linkBtn = `<button class="article-link-button" onclick="openModal(${JSON.stringify(links).replace(/"/g, '&quot;')})">
+                    const linksJson = JSON.stringify(links).replace(/"/g, '&quot;');
+                    linkBtn = `<button class="article-link-button" onclick="openModal(${linksJson})">
                         <i class="fa-solid fa-file-lines"></i> Beitrag lesen + ${links.length - 1} weitere
                     </button>`;
                 }
                 
                 li.innerHTML = `
-                    <img src="${item.thumbnail}" class="thumbnail" onclick="window.open('${item.link}', '_blank')">
+                    <img src="${item.thumbnail}" onclick="window.open('${item.link}', '_blank')">
                     <div class="feed-item-content">
                         <a href="${item.link}" target="_blank" class="title-link">${item.title}</a>
                         <div class="feed-item-date">${date}</div>
                         ${linkBtn}
                     </div>
                 `;
-                
                 list.appendChild(li);
             });
             
             btn.style.display = show.length < items.length ? 'block' : 'none';
         }
 
-        // Spotify Feed laden
+        // Spotify laden
         async function loadSpotify(refresh = false) {
             const panel = document.getElementById('spotify');
-            const status = panel.querySelector('.status-message');
             const btn = panel.querySelector('.refresh-button');
             const icon = btn.querySelector('i');
             
-            if (cachedFeeds.spotify && !refresh) {
-                renderSpotify(cachedFeeds.spotify);
+            if (cache.spotify && !refresh) {
+                renderSpotify(cache.spotify);
                 return;
             }
             
@@ -774,32 +490,33 @@
             
             try {
                 const rssUrl = 'https://anchor.fm/s/105dbc5d0/podcast/rss';
-                const response = await fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(rssUrl));
-                const data = await response.json();
+                const r = await fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(rssUrl));
+                const data = await r.json();
                 
-                if (data.status !== 'ok') throw new Error('RSS Fehler');
+                console.log('Spotify RSS:', data);
                 
-                cachedFeeds.spotify = data.items;
+                if (data.status !== 'ok') throw new Error('RSS failed');
+                
+                cache.spotify = data.items;
                 renderSpotify(data.items);
                 panel.classList.add('loaded');
                 
             } catch (err) {
-                console.error('Spotify Fehler:', err);
-                status.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Fehler beim Laden';
+                console.error('Spotify Error:', err);
+                panel.querySelector('.status-message').innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Fehler beim Laden';
             } finally {
                 icon.classList.remove('fa-spin');
                 btn.disabled = false;
             }
         }
 
-        // Spotify Feed rendern
+        // Spotify rendern
         function renderSpotify(items) {
             const list = document.getElementById('spotify-feed-list');
             const btn = document.querySelector('#spotify .load-more-button');
             
             list.innerHTML = '';
-            
-            const show = items.slice(0, displayLimits.spotify);
+            const show = items.slice(0, limits.spotify);
             
             show.forEach(item => {
                 const li = document.createElement('li');
@@ -808,32 +525,28 @@
                 const date = new Date(item.pubDate).toLocaleDateString('de-DE');
                 
                 li.innerHTML = `
-                    <img src="${item.thumbnail || item.enclosure?.link || ''}" class="thumbnail" onclick="window.open('${item.link}', '_blank')">
+                    <img src="${item.thumbnail || item.enclosure?.link || ''}" onclick="window.open('${item.link}', '_blank')">
                     <div class="feed-item-content">
                         <a href="${item.link}" target="_blank" class="title-link">${item.title}</a>
                         <div class="feed-item-date">${date}</div>
                     </div>
                 `;
-                
                 list.appendChild(li);
             });
             
             btn.style.display = show.length < items.length ? 'block' : 'none';
         }
 
-        // Event Listeners
+        // Events
         document.addEventListener('DOMContentLoaded', () => {
             // Tabs
             document.querySelectorAll('.tab-button').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const tab = btn.dataset.tab;
-                    
                     document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
                     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-                    
                     btn.classList.add('active');
                     document.getElementById(tab).classList.add('active');
-                    
                     if (tab === 'youtube') loadYouTube();
                     if (tab === 'spotify') loadSpotify();
                 });
@@ -843,8 +556,36 @@
             document.querySelectorAll('.refresh-button').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const tab = btn.dataset.tab;
-                    displayLimits[tab] = ITEMS_PER_LOAD;
+                    limits[tab] = ITEMS_PER_LOAD;
                     if (tab === 'youtube') loadYouTube(true);
                     if (tab === 'spotify') loadSpotify(true);
                 });
             });
+            
+            // Load More
+            document.querySelectorAll('.load-more-button').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const tab = btn.dataset.tab;
+                    limits[tab] += ITEMS_PER_LOAD;
+                    if (tab === 'youtube') renderYouTube(cache.youtube);
+                    if (tab === 'spotify') renderSpotify(cache.spotify);
+                });
+            });
+            
+            // Modal schließen
+            document.querySelector('.close-button').addEventListener('click', () => {
+                document.getElementById('multiLinkModal').classList.remove('active');
+            });
+            
+            document.getElementById('multiLinkModal').addEventListener('click', (e) => {
+                if (e.target.id === 'multiLinkModal') {
+                    e.target.classList.remove('active');
+                }
+            });
+            
+            // Initial laden
+            loadYouTube();
+        });
+    </script>
+</body>
+</html>
