@@ -338,15 +338,38 @@
             margin-bottom: 8px;
         }
 
-        .feed-item-description {
+        .article-link-button {
+            background-color: #0056b3; 
+            color: #ffffff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px; 
             font-size: 0.9rem;
-            color: #555;
-            line-height: 1.5;
-            margin-bottom: 10px;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+            cursor: pointer;
+            margin-top: 5px;
+        }
+        
+        .article-link-button:hover {
+            background-color: #004085;
+            transform: translateY(-1px);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .article-link-button.loading {
+            background-color: #95a5a6;
+            cursor: wait;
+            opacity: 0.8;
+        }
+
+        .article-link-button i.fa-spin {
+            animation: fa-spin 1s linear infinite;
         }
 
         .load-more-button {
@@ -366,6 +389,121 @@
 
         .load-more-button:hover {
             background-color: #003d7c;
+        }
+
+        .modal {
+            display: none; 
+            position: fixed; 
+            z-index: 100; 
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto; 
+            background-color: rgba(0,0,0,0.6); 
+            backdrop-filter: blur(5px); 
+            -webkit-backdrop-filter: blur(5px);
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.25);
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+            transform: translateY(20px);
+            opacity: 0;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal.active .modal-content {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .close-button {
+            color: #aaa;
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.2s ease;
+            background: none;
+            border: none;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-button:hover,
+        .close-button:focus {
+            color: #333;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .modal-content h3 {
+            color: #002a5c;
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 1.4rem;
+            padding-right: 30px;
+        }
+
+        .modal-link-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .modal-link-list a {
+            background-color: #e0f2f7; 
+            color: #002a5c;
+            padding: 12px 15px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+        
+        .modal-link-list a:hover {
+            background-color: #cce9f4;
+            transform: translateY(-1px);
+        }
+
+        .modal-link-list a i {
+            flex-shrink: 0;
+        }
+
+        .modal-loading {
+            text-align: center;
+            color: #777;
+            padding: 20px;
         }
 
         @media (max-width: 768px) {
@@ -392,6 +530,10 @@
             }
             .panel-footer .channel-link {
                 max-width: none; 
+            }
+            .modal-content {
+                width: 95%;
+                padding: 20px;
             }
         }
     </style>
@@ -479,6 +621,15 @@
         </div>
     </div>
 
+    <div id="multiLinkModal" class="modal">
+        <div class="modal-content">
+            <button class="close-button">&times;</button>
+            <h3>Beitrag lesen</h3>
+            <div class="modal-link-list">
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         const ITEMS_PER_LOAD = 5;
         const YOUTUBE_API_KEY = 'AIzaSyCyQLP8Tk1u7-VWgGRfleZ6_ojcjkIDre4';
@@ -533,11 +684,83 @@
             return items;
         }
 
+        function extractAntonHansenLinks(description) {
+            if (!description) return [];
+            
+            const urlRegex = /https?:\/\/(www\.)?anton-hansen-schule\.de[^\s<>")]+/gi;
+            const links = description.match(urlRegex) || [];
+            
+            return [...new Set(links)];
+        }
+
+        async function fetchPageTitle(url) {
+            try {
+                const corsProxy = 'https://api.allorigins.win/get?url=';
+                const response = await fetch(corsProxy + encodeURIComponent(url));
+                const data = await response.json();
+                
+                if (data.contents) {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(data.contents, 'text/html');
+                    
+                    const title = doc.querySelector('title')?.textContent?.trim();
+                    if (title) return title;
+                    
+                    const ogTitle = doc.querySelector('meta[property="og:title"]')?.getAttribute('content')?.trim();
+                    if (ogTitle) return ogTitle;
+                }
+                
+                const urlObj = new URL(url);
+                const pathParts = urlObj.pathname.split('/').filter(p => p);
+                if (pathParts.length > 0) {
+                    return pathParts[pathParts.length - 1]
+                        .replace(/-/g, ' ')
+                        .replace(/_/g, ' ')
+                        .replace(/\.html?$/i, '');
+                }
+                
+                return url;
+            } catch (error) {
+                console.error('Fehler beim Abrufen des Titels:', error);
+                return url;
+            }
+        }
+
+        async function openLinkModal(links) {
+            const modal = document.getElementById('multiLinkModal');
+            const modalLinkList = modal.querySelector('.modal-link-list');
+            
+            modalLinkList.innerHTML = '<div class="modal-loading"><i class="fa-solid fa-spinner fa-spin"></i> Lade Seiten...</div>';
+            modal.classList.add('active');
+            
+            try {
+                const linksWithTitles = await Promise.all(
+                    links.map(async (link) => {
+                        const title = await fetchPageTitle(link);
+                        return { link, title };
+                    })
+                );
+
+                modalLinkList.innerHTML = '';
+                linksWithTitles.forEach(({ link, title }) => {
+                    const linkElement = document.createElement('a');
+                    linkElement.href = link;
+                    linkElement.target = '_blank';
+                    linkElement.rel = 'noopener noreferrer';
+                    linkElement.innerHTML = `<i class="fa-solid fa-file-lines"></i> <span>${title}</span>`;
+                    modalLinkList.appendChild(linkElement);
+                });
+            } catch (error) {
+                console.error('Fehler beim Laden der Links:', error);
+                modalLinkList.innerHTML = '<div class="modal-loading" style="color: #c0392b;"><i class="fa-solid fa-circle-exclamation"></i> Fehler beim Laden der Links</div>';
+            }
+        }
+
         async function getYouTubeVideoDetails(videoIds) {
             if (!videoIds || videoIds.length === 0) return {};
             
             const videoIdString = videoIds.join(',');
-            const apiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&id=${videoIdString}&key=${YOUTUBE_API_KEY}`;
+            const apiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoIdString}&key=${YOUTUBE_API_KEY}`;
             
             try {
                 const response = await fetch(apiUrl);
@@ -563,6 +786,18 @@
             const tabButtons = document.querySelectorAll('.tab-button');
             const refreshButtons = document.querySelectorAll('.refresh-button');
             const loadMoreButtons = document.querySelectorAll('.load-more-button');
+            const modal = document.getElementById('multiLinkModal');
+            const closeButton = modal.querySelector('.close-button');
+
+            closeButton.addEventListener('click', () => {
+                modal.classList.remove('active');
+            });
+
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                }
+            });
 
             function showTemporaryFeedback(tabId, message) {
                 const panel = document.getElementById(tabId);
@@ -629,153 +864,4 @@
                 panel.classList.remove('loaded');
                 statusMessage.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Lade ${tabId === 'youtube' ? 'Videos' : 'Folgen'} neu...`;
                 refreshButton.disabled = true;
-                refreshIcon.classList.add('fa-spin');
-                
-                const rssUrl = rssFeeds[tabId];
-
-                try {
-                    let items = [];
-                    
-                    if (tabId === 'youtube') {
-                        const corsProxy = 'https://api.allorigins.win/raw?url=';
-                        const response = await fetch(corsProxy + encodeURIComponent(rssUrl));
-                        const xmlText = await response.text();
-                        
-                        items = parseXMLFeed(xmlText);
-                        
-                        const videoIds = items.map(item => item.videoId).filter(Boolean);
-                        const videoDetails = await getYouTubeVideoDetails(videoIds);
-                        
-                        items = items.map(item => ({
-                            ...item,
-                            description: videoDetails[item.videoId]?.description || item.description,
-                            thumbnail: videoDetails[item.videoId]?.thumbnail || item.thumbnail
-                        }));
-                        
-                    } else {
-                        const encodedRssUrl = encodeURIComponent(rssUrl);
-                        const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodedRssUrl}`;
-                        
-                        const response = await fetch(apiUrl);
-                        const data = await response.json();
-                        
-                        if (data.status !== 'ok') {
-                            throw new Error(data.message || 'Feed konnte nicht geladen werden.');
-                        }
-                        
-                        items = data.items;
-                    }
-                    
-                    cachedFeeds[tabId] = { items };
-                    lastUpdateTimes[tabId] = new Date();
-                    await renderFeed(tabId, { items });
-                    
-                    if (forceRefresh) {
-                        showTemporaryFeedback(tabId, 'Aktualisiert!');
-                    } else {
-                        updateLastRefreshTime(tabId);
-                    }
-
-                } catch (error) {
-                    console.error(`Fehler beim Abrufen des ${tabId}-Feeds:`, error);
-                    statusMessage.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> Fehler beim Laden. Versuche es später erneut.`;
-                    statusMessage.style.color = '#c0392b';
-
-                } finally {
-                    refreshIcon.classList.remove('fa-spin');
-                    refreshButton.disabled = false;
-                }
-            }
-            
-            async function renderFeed(tabId, data) {
-                const panel = document.getElementById(tabId);
-                const list = panel.querySelector('.feed-list');
-                const channelLink = document.getElementById(`${tabId}-channel-link`); 
-                const loadMoreButton = panel.querySelector('.load-more-button');
-                
-                list.innerHTML = ''; 
-                
-                if(channelLink) {
-                    channelLink.href = publicChannelLinks[tabId];
-                }
-                
-                const currentLimit = displayLimits[tabId];
-                const totalItems = data.items.length;
-                
-                const itemsToShow = data.items.slice(0, currentLimit);
-                
-                if (itemsToShow.length === 0) {
-                     panel.querySelector('.status-message').innerHTML = `<i class="fa-solid fa-info-circle"></i> Keine Einträge gefunden.`;
-                     loadMoreButton.style.display = 'none';
-                } else {
-                    itemsToShow.forEach(item => {
-                        const li = document.createElement('li');
-                        li.className = `feed-item ${tabId}`;
-                        
-                        const thumbnail = item.thumbnail || (tabId === 'youtube' ? `https://img.youtube.com/vi/${item.videoId}/mqdefault.jpg` : '');
-                        const link = item.link;
-                        const title = item.title;
-                        const pubDate = new Date(item.pubDate);
-                        const dateStr = pubDate.toLocaleDateString('de-DE', { 
-                            day: '2-digit', 
-                            month: '2-digit', 
-                            year: 'numeric' 
-                        });
-                        
-                        let description = '';
-                        if (item.description) {
-                            description = item.description.length > 150 
-                                ? item.description.substring(0, 150) + '...' 
-                                : item.description;
-                        }
-                        
-                        li.innerHTML = `
-                            ${thumbnail ? `<img src="${thumbnail}" alt="${title}" class="thumbnail" onclick="window.open('${link}', '_blank')">` : ''}
-                            <div class="feed-item-content">
-                                <a href="${link}" target="_blank" rel="noopener noreferrer" class="title-link">${title}</a>
-                                <div class="feed-item-date">${dateStr}</div>
-                                ${description ? `<div class="feed-item-description">${description}</div>` : ''}
-                            </div>
-                        `;
-                        
-                        list.appendChild(li);
-                    });
-                    
-                    panel.classList.add('loaded');
-                    
-                    if (currentLimit < totalItems) {
-                        loadMoreButton.style.display = 'block';
-                    } else {
-                        loadMoreButton.style.display = 'none';
-                    }
-                }
-            }
-            
-            tabButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    const tabId = button.dataset.tab;
-                    activateTab(tabId);
-                    loadFeed(tabId);
-                });
-            });
-            
-            refreshButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    const tabId = button.dataset.tab;
-                    displayLimits[tabId] = ITEMS_PER_LOAD;
-                    loadFeed(tabId, true);
-                });
-            });
-            
-            loadMoreButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    const tabId = button.dataset.tab;
-                    loadMoreItems(tabId);
-                });
-            });
-            
-            loadFeed('youtube');
-        });
-    </script>
-</body>
-</html>
+                refresh
