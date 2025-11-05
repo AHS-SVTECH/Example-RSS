@@ -82,7 +82,24 @@
         }
         .tab-panel.active { display: block; }
         
-        .panel-header { display: flex; justify-content: flex-end; margin-bottom: 20px; gap: 10px; }
+        /* --- GEÄNDERT --- (Für Zeitstempel) */
+        .panel-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 20px; 
+            gap: 10px; 
+            flex-wrap: wrap;
+        }
+        
+        /* --- NEU --- (Für Zeitstempel) */
+        .last-updated {
+            font-size: 0.8rem;
+            color: #666;
+            text-align: left;
+            flex-grow: 1;
+        }
+        
         .refresh-button {
             background: #95a5a6;
             color: #fff;
@@ -95,6 +112,7 @@
             display: inline-flex;
             align-items: center;
             gap: 5px;
+            flex-shrink: 0;
         }
         .refresh-button:hover { background: #7f8c8d; }
         .refresh-button:disabled { opacity: 0.6; cursor: not-allowed; }
@@ -282,7 +300,9 @@
         <div class="tab-content-wrapper">
             <div class="tab-panel active" id="youtube">
                 <div class="status-message"><i class="fa-solid fa-spinner fa-spin"></i> Lade Videos...</div>
+                <!-- --- GEÄNDERT --- (Panel-Header für Zeitstempel) -->
                 <div class="panel-header">
+                    <div class="last-updated" id="youtube-last-updated"></div>
                     <button class="refresh-button" data-tab="youtube">
                         <i class="fa-solid fa-arrows-rotate"></i> Aktualisieren
                     </button>
@@ -298,7 +318,9 @@
 
             <div class="tab-panel" id="spotify">
                 <div class="status-message"><i class="fa-solid fa-spinner fa-spin"></i> Lade Folgen...</div>
+                 <!-- --- GEÄNDERT --- (Panel-Header für Zeitstempel) -->
                 <div class="panel-header">
+                    <div class="last-updated" id="spotify-last-updated"></div>
                     <button class="refresh-button" data-tab="spotify">
                         <i class="fa-solid fa-arrows-rotate"></i> Aktualisieren
                     </button>
@@ -325,19 +347,30 @@
     <script>
         const API_KEY = 'AIzaSyCyQLP8Tk1u7-VWgGRfleZ6_ojcjkIDre4';
         const CHANNEL_ID = 'UC9GtyN6irUK93FwmYsnTHkw';
-        const ITEMS_PER_LOAD = 5;
+        
+        // --- GEÄNDERT --- (Wunsch: 3 Items laden)
+        const ITEMS_PER_LOAD = 3;
         
         let cache = {};
         let limits = { youtube: ITEMS_PER_LOAD, spotify: ITEMS_PER_LOAD };
 
-        // Links extrahieren
+        // --- NEU --- (Helfer-Funktion für Zeitstempel)
+        function updateTimestamp(tab, dateObj) {
+            const el = document.getElementById(`${tab}-last-updated`);
+            if (el) {
+                const options = { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' };
+                el.textContent = `Zuletzt akt.: ${dateObj.toLocaleString('de-DE', options)} Uhr`;
+            }
+        }
+
+        // Links extrahieren (Unverändert)
         function extractLinks(text) {
             if (!text) return [];
             const matches = text.match(/https?:\/\/(www\.)?anton-hansen-schule\.de[^\s<>")]+/gi) || [];
             return [...new Set(matches)];
         }
 
-        // Seitentitel abrufen
+        // Seitentitel abrufen (Unverändert)
         async function getTitle(url) {
             try {
                 const r = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(url));
@@ -347,7 +380,7 @@
             } catch { return 'Beitrag öffnen'; }
         }
 
-        // Modal öffnen
+        // Modal öffnen (Unverändert)
         window.openModal = async function(links) {
             const modal = document.getElementById('multiLinkModal');
             const list = modal.querySelector('.modal-link-list');
@@ -361,7 +394,7 @@
             ).join('');
         };
 
-        // YouTube laden
+        // YouTube laden (--- GEÄNDERT --- Logik korrigiert + Zeitstempel)
         async function loadYouTube(refresh = false) {
             const panel = document.getElementById('youtube');
             const btn = panel.querySelector('.refresh-button');
@@ -369,6 +402,10 @@
             
             if (cache.youtube && !refresh) {
                 renderYouTube(cache.youtube);
+                if (cache.youtube_timestamp) { // Zeitstempel aus Cache laden
+                    updateTimestamp('youtube', cache.youtube_timestamp);
+                }
+                panel.classList.add('loaded'); // Lade-Spinner sicher entfernen
                 return;
             }
             
@@ -382,8 +419,6 @@
                 const r1 = await fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(rssUrl));
                 const rssData = await r1.json();
                 
-                console.log('YouTube RSS:', rssData);
-                
                 if (rssData.status !== 'ok') throw new Error('RSS failed');
                 
                 // Video IDs extrahieren
@@ -394,12 +429,16 @@
                 
                 console.log('Video IDs:', videoIds);
                 
-                // API Details laden
-                const apiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoIds.join(',')}&key=${API_KEY}`;
-                const r2 = await fetch(apiUrl);
-                const apiData = await r2.json();
-                
-                console.log('YouTube API:', apiData);
+                // API Details laden (nur wenn IDs vorhanden sind)
+                let apiData = { items: [] }; // Fallback
+                if (videoIds.length > 0) {
+                     const apiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoIds.join(',')}&key=${API_KEY}`;
+                     const r2 = await fetch(apiUrl);
+                     apiData = await r2.json();
+                     console.log('YouTube API:', apiData);
+                } else {
+                    console.log('Keine Video-IDs gefunden, überspringe API-Aufruf.');
+                }
                 
                 // Descriptions zusammenführen
                 const descs = {};
@@ -407,19 +446,25 @@
                     apiData.items.forEach(v => { descs[v.id] = v.snippet.description; });
                 }
                 
-                // Daten mergen
+                // Daten mergen (wichtig: description wird hier zugewiesen)
                 const items = rssData.items.map(item => {
                     const videoId = item.link.match(/v=([^&]+)/)?.[1];
                     return {
                         ...item,
                         videoId,
-                        description: descs[videoId] || ''
+                        description: descs[videoId] || '' // <-- Hier!
                     };
                 });
                 
                 console.log('Final items:', items);
                 
                 cache.youtube = items;
+                
+                // --- NEU --- Zeitstempel setzen
+                const timestamp = new Date();
+                cache.youtube_timestamp = timestamp;
+                updateTimestamp('youtube', timestamp);
+
                 renderYouTube(items);
                 panel.classList.add('loaded');
                 
@@ -432,7 +477,7 @@
             }
         }
 
-        // YouTube rendern
+        // YouTube rendern (Unverändert)
         function renderYouTube(items) {
             const list = document.getElementById('youtube-feed-list');
             const btn = document.querySelector('#youtube .load-more-button');
@@ -445,7 +490,7 @@
                 li.className = 'feed-item';
                 
                 const date = new Date(item.pubDate).toLocaleDateString('de-DE');
-                const links = extractLinks(item.description);
+                const links = extractLinks(item.description); // <-- Nutzt die description
                 
                 let linkBtn = '';
                 if (links.length === 1) {
@@ -473,7 +518,7 @@
             btn.style.display = show.length < items.length ? 'block' : 'none';
         }
 
-        // Spotify laden
+        // Spotify laden (--- GEÄNDERT --- Zeitstempel)
         async function loadSpotify(refresh = false) {
             const panel = document.getElementById('spotify');
             const btn = panel.querySelector('.refresh-button');
@@ -481,6 +526,10 @@
             
             if (cache.spotify && !refresh) {
                 renderSpotify(cache.spotify);
+                 if (cache.spotify_timestamp) { // Zeitstempel aus Cache laden
+                    updateTimestamp('spotify', cache.spotify_timestamp);
+                }
+                panel.classList.add('loaded');
                 return;
             }
             
@@ -498,6 +547,12 @@
                 if (data.status !== 'ok') throw new Error('RSS failed');
                 
                 cache.spotify = data.items;
+
+                // --- NEU --- Zeitstempel setzen
+                const timestamp = new Date();
+                cache.spotify_timestamp = timestamp;
+                updateTimestamp('spotify', timestamp);
+
                 renderSpotify(data.items);
                 panel.classList.add('loaded');
                 
@@ -510,7 +565,7 @@
             }
         }
 
-        // Spotify rendern
+        // Spotify rendern (Unverändert)
         function renderSpotify(items) {
             const list = document.getElementById('spotify-feed-list');
             const btn = document.querySelector('#spotify .load-more-button');
@@ -537,7 +592,7 @@
             btn.style.display = show.length < items.length ? 'block' : 'none';
         }
 
-        // Events
+        // Events (--- GEÄNDERT --- Refresh setzt Limit zurück)
         document.addEventListener('DOMContentLoaded', () => {
             // Tabs
             document.querySelectorAll('.tab-button').forEach(btn => {
@@ -556,13 +611,13 @@
             document.querySelectorAll('.refresh-button').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const tab = btn.dataset.tab;
-                    limits[tab] = ITEMS_PER_LOAD;
+                    limits[tab] = ITEMS_PER_LOAD; // Wichtig: Setzt beim Refresh auf 3 zurück
                     if (tab === 'youtube') loadYouTube(true);
                     if (tab === 'spotify') loadSpotify(true);
                 });
             });
             
-            // Load More
+            // Load More (lädt 3 weitere)
             document.querySelectorAll('.load-more-button').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const tab = btn.dataset.tab;
