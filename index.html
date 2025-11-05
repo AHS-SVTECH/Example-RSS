@@ -354,22 +354,13 @@
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
             cursor: pointer;
             margin-top: 5px;
+            align-self: flex-start;
         }
         
         .article-link-button:hover {
             background-color: #004085;
             transform: translateY(-1px);
             box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        .article-link-button.loading {
-            background-color: #95a5a6;
-            cursor: wait;
-            opacity: 0.8;
-        }
-
-        .article-link-button i.fa-spin {
-            animation: fa-spin 1s linear infinite;
         }
 
         .load-more-button {
@@ -585,12 +576,12 @@
                     </button>
                 </div>
                 <ul class="feed-list" id="youtube-feed-list"></ul>
-                <button class="load-more-button" data-tab="youtube" id="youtube-load-more" style="display:none;">
+                <button class="load-more-button" data-tab="youtube" style="display:none;">
                     Ältere anzeigen
                 </button>
                 
                 <div class="panel-footer">
-                    <a href="#" class="channel-link youtube" id="youtube-channel-link" target="_blank" rel="noopener noreferrer">
+                    <a href="https://youtube.com/@AHS-OTW?sub_confirmation=1" class="channel-link youtube" target="_blank" rel="noopener noreferrer">
                         <i class="fa-brands fa-youtube"></i> Zum YouTube-Kanal
                     </a>
                 </div>
@@ -607,12 +598,12 @@
                     </button>
                 </div>
                 <ul class="feed-list" id="spotify-feed-list"></ul>
-                <button class="load-more-button" data-tab="spotify" id="spotify-load-more" style="display:none;">
+                <button class="load-more-button" data-tab="spotify" style="display:none;">
                     Ältere anzeigen
                 </button>
                 
                 <div class="panel-footer">
-                    <a href="#" class="channel-link spotify" id="spotify-channel-link" target="_blank" rel="noopener noreferrer">
+                    <a href="https://open.spotify.com/show/1gg6Ky5FUDwSekAQ9IdEdv?si=7eLISP9URn2EQ4MEYZwNAQ" class="channel-link spotify" target="_blank" rel="noopener noreferrer">
                         <i class="fa-brands fa-spotify"></i> Zum Spotify-Podcast
                     </a>
                 </div>
@@ -625,26 +616,15 @@
         <div class="modal-content">
             <button class="close-button">&times;</button>
             <h3>Beitrag lesen</h3>
-            <div class="modal-link-list">
-            </div>
+            <div class="modal-link-list"></div>
         </div>
     </div>
 
-    <script type="module">
+    <script>
         const ITEMS_PER_LOAD = 5;
         const YOUTUBE_API_KEY = 'AIzaSyCyQLP8Tk1u7-VWgGRfleZ6_ojcjkIDre4';
         const YOUTUBE_CHANNEL_ID = 'UC9GtyN6irUK93FwmYsnTHkw';
 
-        const rssFeeds = {
-            youtube: `https://www.youtube.com/feeds/videos.xml?channel_id=${YOUTUBE_CHANNEL_ID}`,
-            spotify: 'https://anchor.fm/s/105dbc5d0/podcast/rss' 
-        };
-
-        const publicChannelLinks = {
-            youtube: 'https://youtube.com/@AHS-OTW?sub_confirmation=1', 
-            spotify: 'https://open.spotify.com/show/1gg6Ky5FUDwSekAQ9IdEdv?si=7eLISP9URn2EQ4MEYZwNAQ' 
-        };
-        
         const cachedFeeds = {};
         const displayLimits = {
             youtube: ITEMS_PER_LOAD,
@@ -655,35 +635,7 @@
             spotify: null
         };
 
-        function parseXMLFeed(xmlString) {
-            const parser = new DOMParser();
-            const xmlDoc = parser.parseFromString(xmlString, 'text/xml');
-            
-            const entries = xmlDoc.querySelectorAll('entry');
-            const items = [];
-            
-            entries.forEach(entry => {
-                const videoId = entry.querySelector('videoId')?.textContent;
-                const title = entry.querySelector('title')?.textContent;
-                const link = entry.querySelector('link')?.getAttribute('href');
-                const published = entry.querySelector('published')?.textContent;
-                const mediaGroup = entry.querySelector('group');
-                const description = mediaGroup?.querySelector('description')?.textContent || '';
-                const thumbnail = mediaGroup?.querySelector('thumbnail')?.getAttribute('url') || '';
-                
-                items.push({
-                    videoId,
-                    title,
-                    link,
-                    pubDate: published,
-                    description,
-                    thumbnail
-                });
-            });
-            
-            return items;
-        }
-
+        // Extrahiere Anton-Hansen-Schule Links aus Beschreibung
         function extractAntonHansenLinks(description) {
             if (!description) return [];
             
@@ -693,6 +645,7 @@
             return [...new Set(links)];
         }
 
+        // Hole Seitentitel via CORS Proxy
         async function fetchPageTitle(url) {
             try {
                 const corsProxy = 'https://api.allorigins.win/get?url=';
@@ -713,19 +666,20 @@
                 const urlObj = new URL(url);
                 const pathParts = urlObj.pathname.split('/').filter(p => p);
                 if (pathParts.length > 0) {
-                    return pathParts[pathParts.length - 1]
+                    return decodeURIComponent(pathParts[pathParts.length - 1])
                         .replace(/-/g, ' ')
                         .replace(/_/g, ' ')
                         .replace(/\.html?$/i, '');
                 }
                 
-                return url;
+                return 'Beitrag öffnen';
             } catch (error) {
                 console.error('Fehler beim Abrufen des Titels:', error);
-                return url;
+                return 'Beitrag öffnen';
             }
         }
 
+        // Öffne Modal mit mehreren Links
         async function openLinkModal(links) {
             const modal = document.getElementById('multiLinkModal');
             const modalLinkList = modal.querySelector('.modal-link-list');
@@ -756,6 +710,7 @@
             }
         }
 
+        // YouTube Video Details von API abrufen
         async function getYouTubeVideoDetails(videoIds) {
             if (!videoIds || videoIds.length === 0) return {};
             
@@ -767,12 +722,14 @@
                 const data = await response.json();
                 
                 const details = {};
-                data.items?.forEach(item => {
-                    details[item.id] = {
-                        description: item.snippet.description,
-                        thumbnail: item.snippet.thumbnails.medium.url
-                    };
-                });
+                if (data.items) {
+                    data.items.forEach(item => {
+                        details[item.id] = {
+                            description: item.snippet.description,
+                            thumbnail: item.snippet.thumbnails.medium.url
+                        };
+                    });
+                }
                 
                 return details;
             } catch (error) {
@@ -780,88 +737,126 @@
                 return {};
             }
         }
-        
-        document.addEventListener('DOMContentLoaded', () => {
+
+        // YouTube RSS Feed parsen
+        function parseYouTubeRSS(xmlString) {
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(xmlString, 'text/xml');
             
-            const tabButtons = document.querySelectorAll('.tab-button');
-            const refreshButtons = document.querySelectorAll('.refresh-button');
-            const loadMoreButtons = document.querySelectorAll('.load-more-button');
-            const modal = document.getElementById('multiLinkModal');
-            const closeButton = modal.querySelector('.close-button');
-
-            closeButton.addEventListener('click', () => {
-                modal.classList.remove('active');
-            });
-
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    modal.classList.remove('active');
-                }
-            });
-
-            function showTemporaryFeedback(tabId, message) {
-                const panel = document.getElementById(tabId);
-                const header = panel.querySelector('.panel-header');
-                let feedback = header.querySelector('.refresh-feedback');
-                
-                feedback.textContent = message;
-                feedback.style.color = '#1DB954';
-                feedback.style.opacity = 1;
-                
-                setTimeout(() => {
-                    feedback.style.opacity = 0;
-                    setTimeout(() => {
-                        updateLastRefreshTime(tabId);
-                    }, 500);
-                }, 2000); 
-            }
+            const entries = xmlDoc.querySelectorAll('entry');
+            const items = [];
             
-            function updateLastRefreshTime(tabId) {
-                const panel = document.getElementById(tabId);
-                const header = panel.querySelector('.panel-header');
-                let feedback = header.querySelector('.refresh-feedback');
+            entries.forEach(entry => {
+                const videoId = entry.querySelector('videoId')?.textContent;
+                const title = entry.querySelector('title')?.textContent;
+                const link = entry.querySelector('link')?.getAttribute('href');
+                const published = entry.querySelector('published')?.textContent;
                 
-                if (lastUpdateTimes[tabId]) {
-                    const timeStr = lastUpdateTimes[tabId].toLocaleTimeString('de-DE', {
-                        hour: '2-digit',
-                        minute: '2-digit'
+                if (videoId && title && link && published) {
+                    items.push({
+                        videoId,
+                        title,
+                        link,
+                        pubDate: published,
+                        thumbnail: `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`
                     });
-                    feedback.textContent = `Zuletzt aktualisiert: ${timeStr}`;
-                    feedback.style.opacity = 0.7;
-                    feedback.style.color = '#777';
+                }
+            });
+            
+            return items;
+        }
+
+        // Lade YouTube Feed
+        async function loadYouTubeFeed(forceRefresh = false) {
+            const panel = document.getElementById('youtube');
+            const statusMessage = panel.querySelector('.status-message');
+            const refreshButton = panel.querySelector('.refresh-button');
+            const refreshIcon = refreshButton.querySelector('i');
+            
+            if (cachedFeeds.youtube && !forceRefresh) {
+                renderYouTubeFeed(cachedFeeds.youtube);
+                return;
+            }
+            
+            panel.classList.remove('loaded');
+            refreshButton.disabled = true;
+            refreshIcon.classList.add('fa-spin');
+            
+            try {
+                const rssUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${YOUTUBE_CHANNEL_ID}`;
+                const corsProxy = 'https://api.allorigins.win/raw?url=';
+                
+                const response = await fetch(corsProxy + encodeURIComponent(rssUrl));
+                const xmlText = await response.text();
+                
+                let items = parseYouTubeRSS(xmlText);
+                
+                // Hole Details von YouTube API
+                const videoIds = items.map(item => item.videoId);
+                const videoDetails = await getYouTubeVideoDetails(videoIds);
+                
+                // Merge Details
+                items = items.map(item => ({
+                    ...item,
+                    description: videoDetails[item.videoId]?.description || '',
+                    thumbnail: videoDetails[item.videoId]?.thumbnail || item.thumbnail
+                }));
+                
+                cachedFeeds.youtube = items;
+                lastUpdateTimes.youtube = new Date();
+                
+                renderYouTubeFeed(items);
+                
+                if (forceRefresh) {
+                    showFeedback('youtube', 'Aktualisiert!');
                 } else {
-                    feedback.textContent = '';
-                    feedback.style.opacity = 0;
-                }
-            }
-            
-            function activateTab(tabId) {
-                document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-                document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
-
-                document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
-                document.getElementById(tabId).classList.add('active');
-            }
-            
-            function loadMoreItems(tabId) {
-                displayLimits[tabId] += ITEMS_PER_LOAD; 
-                if (cachedFeeds[tabId]) {
-                    renderFeed(tabId, cachedFeeds[tabId]); 
-                }
-            }
-
-            async function loadFeed(tabId, forceRefresh = false) {
-                const panel = document.getElementById(tabId);
-                const statusMessage = panel.querySelector('.status-message');
-                const refreshButton = panel.querySelector('.refresh-button');
-                const refreshIcon = refreshButton.querySelector('i');
-                
-                if (cachedFeeds[tabId] && !forceRefresh) {
-                    renderFeed(tabId, cachedFeeds[tabId]);
-                    return;
+                    updateLastRefreshTime('youtube');
                 }
                 
-                panel.classList.remove('loaded');
-                statusMessage.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Lade ${tabId === 'youtube' ? 'Videos' : 'Folgen'} neu...`;
-                refreshButton.disabled = true;
-                refresh
+            } catch (error) {
+                console.error('Fehler beim Laden des YouTube-Feeds:', error);
+                statusMessage.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Fehler beim Laden. Versuche es später erneut.';
+            } finally {
+                refreshIcon.classList.remove('fa-spin');
+                refreshButton.disabled = false;
+            }
+        }
+
+        // Render YouTube Feed
+        function renderYouTubeFeed(items) {
+            const panel = document.getElementById('youtube');
+            const list = document.getElementById('youtube-feed-list');
+            const loadMoreButton = panel.querySelector('.load-more-button');
+            
+            list.innerHTML = '';
+            
+            const currentLimit = displayLimits.youtube;
+            const itemsToShow = items.slice(0, currentLimit);
+            
+            if (itemsToShow.length === 0) {
+                panel.querySelector('.status-message').innerHTML = '<i class="fa-solid fa-info-circle"></i> Keine Videos gefunden.';
+                loadMoreButton.style.display = 'none';
+                return;
+            }
+            
+            itemsToShow.forEach(item => {
+                const li = document.createElement('li');
+                li.className = 'feed-item youtube';
+                
+                const pubDate = new Date(item.pubDate);
+                const dateStr = pubDate.toLocaleDateString('de-DE', { 
+                    day: '2-digit', 
+                    month: '2-digit', 
+                    year: 'numeric' 
+                });
+                
+                // Extrahiere Anton-Hansen-Schule Links
+                const ahsLinks = extractAntonHansenLinks(item.description);
+                
+                let linkButtonHTML = '';
+                if (ahsLinks.length === 1) {
+                    linkButtonHTML = `<a href="${ahsLinks[0]}" target="_blank" rel="noopener noreferrer" class="article-link-button">
+                        <i class="fa-solid fa-file-lines"></i> Beitrag dazu lesen
+                    </a>`;
+                } else if (ahsLinks.length > 1) {
+                    linkButtonHTML = `<button class="article-link
