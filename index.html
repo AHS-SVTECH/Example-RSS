@@ -647,7 +647,29 @@
                 
                 setTimeout(() => {
                     feedback.style.opacity = 0;
+                    setTimeout(() => {
+                        updateLastRefreshTime(tabId);
+                    }, 500);
                 }, 2000); 
+            }
+            
+            function updateLastRefreshTime(tabId) {
+                const panel = document.getElementById(tabId);
+                const header = panel.querySelector('.panel-header');
+                let feedback = header.querySelector('.refresh-feedback');
+                
+                if (lastUpdateTimes[tabId]) {
+                    const timeStr = lastUpdateTimes[tabId].toLocaleTimeString('de-DE', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    feedback.textContent = `Zuletzt aktualisiert: ${timeStr}`;
+                    feedback.style.opacity = 0.7;
+                    feedback.style.color = '#777';
+                } else {
+                    feedback.textContent = '';
+                    feedback.style.opacity = 0;
+                }
             }
             
             function activateTab(tabId) {
@@ -783,8 +805,14 @@
                     }
                     
                     cachedFeeds[tabId] = data;
+                    lastUpdateTimes[tabId] = new Date();
                     renderFeed(tabId, data);
-                    showTemporaryFeedback(tabId, 'Aktualisiert!');
+                    
+                    if (forceRefresh) {
+                        showTemporaryFeedback(tabId, 'Aktualisiert!');
+                    } else {
+                        updateLastRefreshTime(tabId);
+                    }
 
                 } catch (error) {
                     console.error(`Fehler beim Abrufen des ${tabId}-Feeds:`, error);
@@ -797,7 +825,7 @@
                 }
             }
             
-            function renderFeed(tabId, data) {
+            async function renderFeed(tabId, data) {
                 const panel = document.getElementById(tabId);
                 const list = panel.querySelector('.feed-list');
                 const channelLink = document.getElementById(`${tabId}-channel-link`); 
@@ -818,10 +846,30 @@
                      panel.querySelector('.status-message').innerHTML = `<i class="fa-solid fa-info-circle"></i> Keine Einträge gefunden.`;
                      loadMoreButton.style.display = 'none';
                 } else {
-                    itemsToShow.forEach(item => {
-                        const listItem = createFeedItem(item, tabId);
-                        list.appendChild(listItem);
-                    });
+                    // Für YouTube: Erst alle Links laden, dann rendern
+                    if (tabId === 'youtube') {
+                        const itemsWithLinks = await Promise.all(
+                            itemsToShow.map(async item => {
+                                const urlMatch = item.link.match(/[?&]v=([^&]+)/);
+                                if (urlMatch) {
+                                    const videoId = urlMatch[1];
+                                    const links = await fetchLinksFromYouTubeAPI(videoId);
+                                    return { ...item, ahsLinks: links };
+                                }
+                                return { ...item, ahsLinks: [] };
+                            })
+                        );
+                        
+                        itemsWithLinks.forEach(item => {
+                            const listItem = createFeedItem(item, tabId);
+                            list.appendChild(listItem);
+                        });
+                    } else {
+                        itemsToShow.forEach(item => {
+                            const listItem = createFeedItem(item, tabId);
+                            list.appendChild(listItem);
+                        });
+                    }
 
                     if (currentLimit < totalItems) {
                         loadMoreButton.style.display = 'block';
