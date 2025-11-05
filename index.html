@@ -598,15 +598,14 @@
     </div>
 
     <script>
-        const APP = {
-            ITEMS_PER_LOAD: 5,
-            API_KEY: 'AIzaSyCyQLP8Tk1u7-VWgGRfleZ6_ojcjkIDre4',
-            CHANNEL_ID: 'UC9GtyN6irUK93FwmYsnTHkw',
-            cache: {},
-            limits: { youtube: 5, spotify: 5 }
-        };
+        const ITEMS_PER_LOAD = 5;
+        const YOUTUBE_API_KEY = 'AIzaSyCyQLP8Tk1u7-VWgGRfleZ6_ojcjkIDre4';
+        const YOUTUBE_CHANNEL_ID = 'UC9GtyN6irUK93FwmYsnTHkw';
 
-        // Extrahiere Links
+        let cachedFeeds = {};
+        let displayLimits = { youtube: ITEMS_PER_LOAD, spotify: ITEMS_PER_LOAD };
+
+        // Extrahiere Anton-Hansen-Schule Links
         function extractLinks(text) {
             if (!text) return [];
             const regex = /https?:\/\/(www\.)?anton-hansen-schule\.de[^\s<>")]+/gi;
@@ -614,10 +613,10 @@
         }
 
         // Hole Seitentitel
-        async function getTitle(url) {
+        async function getPageTitle(url) {
             try {
-                const res = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(url));
-                const data = await res.json();
+                const response = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(url));
+                const data = await response.json();
                 const doc = new DOMParser().parseFromString(data.contents, 'text/html');
                 return doc.querySelector('title')?.textContent?.trim() || 'Beitrag öffnen';
             } catch {
@@ -630,30 +629,36 @@
             const modal = document.getElementById('multiLinkModal');
             const list = modal.querySelector('.modal-link-list');
             
-            list.innerHTML = '<div class="modal-loading"><i class="fa-solid fa-spinner fa-spin"></i> Lade...</div>';
+            list.innerHTML = '<div class="modal-loading"><i class="fa-solid fa-spinner fa-spin"></i> Lade Seiten...</div>';
             modal.classList.add('active');
             
-            const items = await Promise.all(links.map(async link => ({
-                link,
-                title: await getTitle(link)
-            })));
-            
-            list.innerHTML = items.map(({link, title}) => 
-                `<a href="${link}" target="_blank" rel="noopener noreferrer">
-                    <i class="fa-solid fa-file-lines"></i> ${title}
-                </a>`
-            ).join('');
+            try {
+                const linksWithTitles = await Promise.all(
+                    links.map(async link => ({
+                        link,
+                        title: await getPageTitle(link)
+                    }))
+                );
+                
+                list.innerHTML = linksWithTitles.map(({link, title}) => 
+                    `<a href="${link}" target="_blank" rel="noopener noreferrer">
+                        <i class="fa-solid fa-file-lines"></i> ${title}
+                    </a>`
+                ).join('');
+            } catch {
+                list.innerHTML = '<div class="modal-loading" style="color: #c0392b;">Fehler beim Laden</div>';
+            }
         }
 
-        // YouTube laden
+        // YouTube Feed laden
         async function loadYouTube(refresh = false) {
             const panel = document.getElementById('youtube');
             const status = panel.querySelector('.status-message');
             const btn = panel.querySelector('.refresh-button');
             const icon = btn.querySelector('i');
             
-            if (APP.cache.youtube && !refresh) {
-                renderYouTube(APP.cache.youtube);
+            if (cachedFeeds.youtube && !refresh) {
+                renderYouTube(cachedFeeds.youtube);
                 return;
             }
             
@@ -662,44 +667,41 @@
             icon.classList.add('fa-spin');
             
             try {
-                // RSS laden
-                const rssUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${APP.CHANNEL_ID}`;
-                const res1 = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(rssUrl));
-                const xml = await res1.text();
+                // 1. Lade RSS Feed für Video-Liste
+                const rssUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${YOUTUBE_CHANNEL_ID}`;
+                const rssResponse = await fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(rssUrl));
+                const rssData = await rssResponse.json();
                 
-                const doc = new DOMParser().parseFromString(xml, 'text/xml');
-                const entries = Array.from(doc.querySelectorAll('entry'));
+                if (rssData.status !== 'ok') throw new Error('RSS Fehler');
                 
-                let items = entries.map(e => ({
-                    id: e.querySelector('videoId')?.textContent,
-                    title: e.querySelector('title')?.textContent,
-                    link: e.querySelector('link')?.getAttribute('href'),
-                    date: e.querySelector('published')?.textContent
-                })).filter(i => i.id && i.title);
+                // 2. Lade Video-Beschreibungen via YouTube API
+                const videoIds = rssData.items.map(item => {
+                    const match = item.link.match(/v=([^&]+)/);
+                    return match ? match[1] : null;
+                }).filter(Boolean);
                 
-                // API Details laden
-                const ids = items.map(i => i.id).join(',');
-                const apiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${ids}&key=${APP.API_KEY}`;
-                const res2 = await fetch(apiUrl);
-                const data = await res2.json();
+                const apiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoIds.join(',')}&key=${YOUTUBE_API_KEY}`;
+                const apiResponse = await fetch(apiUrl);
+                const apiData = await apiResponse.json();
                 
-                const details = {};
-                if (data.items) {
-                    data.items.forEach(v => {
-                        details[v.id] = {
-                            desc: v.snippet.description,
-                            thumb: v.snippet.thumbnails.medium.url
-                        };
+                // 3. Merge Daten
+                const descriptions = {};
+                if (apiData.items) {
+                    apiData.items.forEach(video => {
+                        descriptions[video.id] = video.snippet.description;
                     });
                 }
                 
-                items = items.map(i => ({
-                    ...i,
-                    desc: details[i.id]?.desc || '',
-                    thumb: details[i.id]?.thumb || `https://img.youtube.com/vi/${i.id}/mqdefault.jpg`
-                }));
+                const items = rssData.items.map(item => {
+                    const videoId = item.link.match(/v=([^&]+)/)?.[1];
+                    return {
+                        ...item,
+                        videoId,
+                        description: descriptions[videoId] || ''
+                    };
+                });
                 
-                APP.cache.youtube = items;
+                cachedFeeds.youtube = items;
                 renderYouTube(items);
                 panel.classList.add('loaded');
                 
@@ -712,21 +714,21 @@
             }
         }
 
-        // YouTube rendern
+        // YouTube Feed rendern
         function renderYouTube(items) {
             const list = document.getElementById('youtube-feed-list');
             const btn = document.querySelector('#youtube .load-more-button');
             
             list.innerHTML = '';
             
-            const show = items.slice(0, APP.limits.youtube);
+            const show = items.slice(0, displayLimits.youtube);
             
             show.forEach(item => {
                 const li = document.createElement('li');
                 li.className = 'feed-item';
                 
-                const date = new Date(item.date).toLocaleDateString('de-DE');
-                const links = extractLinks(item.desc);
+                const date = new Date(item.pubDate).toLocaleDateString('de-DE');
+                const links = extractLinks(item.description);
                 
                 let linkBtn = '';
                 if (links.length === 1) {
@@ -740,7 +742,7 @@
                 }
                 
                 li.innerHTML = `
-                    <img src="${item.thumb}" class="thumbnail" onclick="window.open('${item.link}', '_blank')">
+                    <img src="${item.thumbnail}" class="thumbnail" onclick="window.open('${item.link}', '_blank')">
                     <div class="feed-item-content">
                         <a href="${item.link}" target="_blank" class="title-link">${item.title}</a>
                         <div class="feed-item-date">${date}</div>
@@ -754,15 +756,15 @@
             btn.style.display = show.length < items.length ? 'block' : 'none';
         }
 
-        // Spotify laden
+        // Spotify Feed laden
         async function loadSpotify(refresh = false) {
             const panel = document.getElementById('spotify');
             const status = panel.querySelector('.status-message');
             const btn = panel.querySelector('.refresh-button');
             const icon = btn.querySelector('i');
             
-            if (APP.cache.spotify && !refresh) {
-                renderSpotify(APP.cache.spotify);
+            if (cachedFeeds.spotify && !refresh) {
+                renderSpotify(cachedFeeds.spotify);
                 return;
             }
             
@@ -772,18 +774,14 @@
             
             try {
                 const rssUrl = 'https://anchor.fm/s/105dbc5d0/podcast/rss';
-                const apiUrl = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(rssUrl);
+                const response = await fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(rssUrl));
+                const data = await response.json();
                 
-                const res = await fetch(apiUrl);
-                const data = await res.json();
+                if (data.status !== 'ok') throw new Error('RSS Fehler');
                 
-                if (data.status === 'ok') {
-                    APP.cache.spotify = data.items;
-                    renderSpotify(data.items);
-                    panel.classList.add('loaded');
-                } else {
-                    throw new Error('RSS Fehler');
-                }
+                cachedFeeds.spotify = data.items;
+                renderSpotify(data.items);
+                panel.classList.add('loaded');
                 
             } catch (err) {
                 console.error('Spotify Fehler:', err);
@@ -794,14 +792,14 @@
             }
         }
 
-        // Spotify rendern
+        // Spotify Feed rendern
         function renderSpotify(items) {
             const list = document.getElementById('spotify-feed-list');
             const btn = document.querySelector('#spotify .load-more-button');
             
             list.innerHTML = '';
             
-            const show = items.slice(0, APP.limits.spotify);
+            const show = items.slice(0, displayLimits.spotify);
             
             show.forEach(item => {
                 const li = document.createElement('li');
@@ -845,13 +843,8 @@
             document.querySelectorAll('.refresh-button').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const tab = btn.dataset.tab;
-                    APP.limits[tab] = APP.ITEMS_PER_LOAD;
+                    displayLimits[tab] = ITEMS_PER_LOAD;
                     if (tab === 'youtube') loadYouTube(true);
                     if (tab === 'spotify') loadSpotify(true);
                 });
             });
-            
-            // Load More
-            document.querySelectorAll('.load-more-button').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const tab = btn.dataset.tab;
