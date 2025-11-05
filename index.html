@@ -620,6 +620,10 @@
             youtube: ITEMS_PER_LOAD,
             spotify: ITEMS_PER_LOAD
         };
+        const lastUpdateTimes = {
+            youtube: null,
+            spotify: null
+        };
         
         // Regex findet alle Links mit anton-hansen-schule.de (inkl. Subdomains)
         const ahsLinkRegex = /https?:\/\/(?:[a-zA-Z0-9-]+\.)?anton-hansen-schule\.de[^\s"<>)\]']*/gi;
